@@ -1,0 +1,98 @@
+
+
+type TemClient struct {
+	*ethclient.Client
+	RpcClient *rpc.Client
+	Node      *Node
+}
+
+// 创建Tem节点
+func NewTemClient(conf *Node) (*TemClient, error) {
+	var url string
+	if conf.Port > 0 {
+		url = fmt.Sprintf("http://%s:%d", conf.Ip, conf.Port)
+	} else {
+		url = conf.Ip
+	}
+	client, err := rpc.Dial(url)
+	if err != nil {
+		return nil, err
+	}
+	node := &TemClient{
+		Client:    ethclient.NewClient(client),
+		RpcClient: client,
+		Node:      conf,
+	}
+	return node, nil
+}
+
+// 查询地址余额
+func (c *TemClient) GetBalance(addr, state string) (*big.Int, error) {
+	return big.NewInt(0), err
+}
+
+// 查询地址代币余额
+func (c *TemClient) GetBalanceByContract(addr, contractAddr string) (*big.Int, error) {
+	return big.NewInt(0), err
+}
+
+// 查询交易信息
+func (c *TemClient) GetTransactionByHash(txHash string) (interface{}, bool, error) {
+	return nil, false, nil
+}
+
+// 查询合约精度
+func (c *TemClient) GetDecimals(contractAddr string) (*big.Int, error) {
+	return big.NewInt(0), err
+}
+
+// 查询合约symbol
+func (c *TemClient) GetSymbol(contractAddr string) (string, error) {
+	return "", nil
+}
+
+// 查询建议手续
+func (c *TemClient) SuggestGasPrice() *big.Int {
+		return big.NewInt(0)
+}
+
+// 查询地址的nonce
+func (c *TemClient) GetNonce(addr, param string) (uint64, error) {
+	return 0, nil
+}
+
+// 查询chain_id
+func (c *TemClient) ChainID() (*big.Int, error) {
+	return big.NewInt(0), nil
+}
+
+// 查询最新区块高度
+func (c *TemClient) GetBlockHeight() (int64, error) {
+	return 0, nil
+}
+
+// 构建交易
+func (c *TemClient) BuildTransferInfo(toAddr, contract, amount, gasPrice, nonce string) (interface{}, error) {
+	return nil, nil
+}
+
+func (c *TemClient) SignAndSendTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error) {
+	return "", nil
+}
+
+// SendRawTransaction sends tx to node.
+func (c *TemClient) SendRawTransaction(hexTx string) (string, error) {
+	return "", nil
+}
+
+// 构建合约调用
+func (c *TemClient) BuildContractInfo(contract, abiContent, gasPrice, nonce, params string, args ...interface{}) (interface{}, error) {
+	return nil, nil
+}
+
+// 关闭链接
+func (node *TemClient) Close() {
+	if node.client != nil {
+		node.Client.Close()
+	}
+}
