@@ -26,3 +26,9 @@ type GasPriceInfo struct {
 	Average string `json:"average"` // 建议手续费
 	Low     string `json:"low"`     // 低
 }
+
+// 选择使用的UTXO
+type ChooseUTXO struct {
+	TxHash string
+	Vout   uint32
+}

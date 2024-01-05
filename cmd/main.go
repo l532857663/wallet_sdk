@@ -13,7 +13,8 @@ func main() {
 	// test3Func()
 	// test4Func()
 	// test5Func()
-	test6Func()
+	// test6Func()
+	test7Func()
 }
 
 var (
@@ -53,7 +54,7 @@ var (
 	// addr   = "2NBeoUKGLyk5ZfSDtAvsfWteYQaAKdUAniF"
 	// addr   = "tb1pnkfdsmf6q4rmjtn3dunrmekxy57eq6xx7mnhthwu9z23u5hceluqvzmvul"
 	toAddr = "tb1qmryulp7lvf56n93qywjh7x9e850yg9l62gjhjk"
-	priKey = ""
+	priKey = "cTAroTKYviiVEqxPmTW43JEU56EFZLhLWYgcxHk8nfBovj72eXbT"
 	// priKeyHex = ""
 	priKeyHex = ""
 	txHash    = "07b6936e51f8e7a83cd3f9fd811861224246924dd5b57052917aa87604fb2fa9"
@@ -204,7 +205,34 @@ func test6Func() {
 	// 私钥查询地址
 	wallet_sdk.GetPrikeyAndPubkey(chainName, priKey, priKeyHex)
 	// 查询UTXO信息
-	addr = "tb1qfytrtvc39ugaxdj75h5p5j9yv4y3mutjsqsvwe"
+	addr = "tb1qw9kqg0r9gjzduzzms4xguaskt0c0t2wcnwff4j"
 	res2 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
 	fmt.Printf("res: %+v\n", res2)
+}
+
+func test7Func() {
+	// 多地址签名出账
+	// 查询节点gas price
+	gasPriceData := wallet_sdk.GetGasPrice(chainName)
+	// fmt.Printf("res: %+v\n", gasPriceData.Data)
+	gasPrice := gasPriceData.Data.Average
+	fmt.Printf("gasPrice: %+v\n", gasPrice)
+
+	// 构建交易
+	froms := []string{"n1HE1YJ1zF5U5aiX2DNu5WhjE9KFrkSKkx", "mqrg3rNg7cCLHVRCqYpzQoNE744DvJreeN"}
+	utxos := []wallet_sdk.ChooseUTXO{
+		{TxHash: "303b1e8f45adf1b1d07e1febb8fe0da2e4772862bf4189fbb120c188c5ecd95b", Vout: 1},
+		{TxHash: "7fc39b92f2bc4bd12e5c441bf7e9f3f56cae02995c32ce07d0a14dc1b7ae872c", Vout: 0},
+	}
+	toAddrs := []string{"2NBeoUKGLyk5ZfSDtAvsfWteYQaAKdUAniF"}
+	amounts := []string{"0.0002"}
+	changeAddr := ""
+	res5 := wallet_sdk.BuildTransferInfoByBTCList(chainName, froms, utxos, toAddrs, amounts, gasPrice, changeAddr)
+	fmt.Printf("res: %+v\n", res5)
+
+	// 签名并广播交易
+	priKeys := []string{"cQSreoKBANpfNxLHD6v1crHE3rz44Q7hZPsV2XaJVQv6dA5eXGQV", "cTAroTKYviiVEqxPmTW43JEU56EFZLhLWYgcxHk8nfBovj72eXbT"}
+	signData := res5.Data
+	res7 := wallet_sdk.SignListAndSendTransferInfo(chainName, priKeys, string(signData))
+	fmt.Printf("res: %+v\n", res7)
 }

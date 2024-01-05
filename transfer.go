@@ -274,3 +274,131 @@ func BuildPSBTransferInfo(chainName, gasPrice string) *CommonResp {
 	res.Data = string(signData)
 	return res
 }
+
+/**
+ * 构建多对多交易
+ *
+ * Params (chainName string, fromAddrs []string, vins []ChooseUTXO, toAddrs, amounts []string, gasPrice, changeAddr string)
+ * chainName:
+ *   链名称
+ * fromAddrs:
+ *   出账地址列表
+ * txHashs:
+ *   出账地址UTXO哈希列表
+ * toAddrs:
+ *   目标地址列表
+ * amounts:
+ *   目标金额
+ * gasPrice:
+ *   gas price 单位：Gwei
+ */
+func BuildTransferInfoByBTCList(chainName string, fromAddrs []string, vins []ChooseUTXO, toAddrs, amounts []string, gasPrice, changeAddr string) *CommonResp {
+	res := &CommonResp{}
+	funcName := "BuildTransferInfoByBTCList"
+
+	// 链接节点
+	cli, err := NewNodeService(chainName)
+	defer cli.Close()
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] new node client error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+
+	// 最终使用UTXO
+	var useUTXOList []*client.UnspendUTXOList
+	// 查询FROM地址的UTXO
+	for i, fromAddr := range fromAddrs {
+		utxoInterface, err := cli.GetAddressUTXO(fromAddr, "")
+		if err != nil {
+			resp := ResFailed
+			resp.Message = fmt.Sprintf("[%s] Get address [%s] utxo error: %+v", funcName, fromAddr, err)
+			res.Status = resp
+			return res
+		}
+		unspendUTXOList := utxoInterface.([]*client.UnspendUTXOList)
+		if len(unspendUTXOList) < 1 {
+			resp := ResFailed
+			resp.Message = fmt.Sprintf("[%s] This address [%s] not have utxo", funcName, fromAddr)
+			res.Status = resp
+			return res
+		}
+		for _, unUtxo := range unspendUTXOList {
+			if unUtxo.TxHash != vins[i].TxHash || unUtxo.Vout != vins[i].Vout {
+				continue
+			}
+			useUTXOList = append(useUTXOList, unUtxo)
+		}
+	}
+
+	// to地址数据处理
+	var toAddrList []*client.ToAddrDetail
+	for i, toAddr := range toAddrs {
+		detail := client.GetToAddrDetail(toAddr, amounts[i])
+		toAddrList = append(toAddrList, detail)
+	}
+	// 创建交易结构
+	TxInfo, err := cli.BuildTransferInfoByList(useUTXOList, toAddrList, gasPrice, changeAddr)
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] build transfer info error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+	fmt.Printf("test Tx info: %+v\n", TxInfo)
+
+	// 字符串
+	signData, err := json.Marshal(TxInfo)
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] json.Marshal transfer info error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+
+	// 返回结果
+	res.Status = ResSuccess
+	res.Data = string(signData)
+	return res
+}
+
+/**
+ * 合并签名并广播交易
+ *
+ * Params (chainName, priKeys []string, apiTx interface{})
+ * chainName:
+ *   链名称
+ * priKeys:
+ *   私钥
+ * apiTx:
+ *   交易信息
+ */
+func SignListAndSendTransferInfo(chainName string, priKeys []string, apiTx string) *CommonResp {
+	res := &CommonResp{}
+	funcName := "SignTransferInfo"
+
+	// 链接节点
+	cli, err := NewNodeService(chainName)
+	defer cli.Close()
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] new node client error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+
+	// 签名并广播交易
+	txHash, err := cli.SignListAndSendTransfer(apiTx, priKeys)
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] sign transfer error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+
+	// 返回结果
+	res.Status = ResSuccess
+	res.Data = txHash
+	return res
+}

@@ -416,6 +416,57 @@ func (c *BtcClient) SendRawTransaction(hexTx string) (string, error) {
 	return txHash, nil
 }
 
+// 构建交易
+func (c *BtcClient) BuildTransferInfoByList(unSpendUTXOList []*UnspendUTXOList, toAddrList []*ToAddrDetail, gasPrice, changeAddr string) (interface{}, error) {
+	// 手续费
+	gas := BtcToSatoshi(gasPrice)
+
+	apiTx, err := c.genBtcTransaction(unSpendUTXOList, toAddrList, gas, changeAddr)
+	if nil != err {
+		return nil, fmt.Errorf("BuildTransaction fatal, " + err.Error())
+	}
+	txObj := &BtcTransferInfo{
+		ApiTx:    apiTx,
+		UTXOList: unSpendUTXOList,
+	}
+	return txObj, nil
+}
+
+// 多个地址的签名出账
+func (c *BtcClient) SignListAndSendTransfer(txObj string, hexPrivateKeys []string) (string, error) {
+	txInfo := &BtcTransferInfo{}
+	err := json.Unmarshal([]byte(txObj), txInfo)
+	if err != nil {
+		return "", err
+	}
+	apiTx := txInfo.ApiTx
+	for idx, rti := range txInfo.UTXOList {
+		prevOutScript, err := hex.DecodeString(rti.ScriptPubKey)
+		if err != nil {
+			fmt.Printf("invalid script key error: %+v\n", err)
+			return "", err
+		}
+		_, err = c.sign(apiTx, hexPrivateKeys[idx], idx, prevOutScript)
+		if err != nil {
+			fmt.Printf("Sign err: %+v\n", err)
+			return "", err
+		}
+	}
+	// 签名
+	var buf bytes.Buffer
+	buf.Grow(hex.EncodedLen(apiTx.SerializeSize()))
+	if err := apiTx.Serialize(hex.NewEncoder(&buf)); err != nil {
+		return "", err
+	}
+	fmt.Printf("apiTx info: %+v\n", buf.String())
+
+	txHash, err := c.Client.SendRawTransaction(apiTx, false)
+	if nil != err {
+		return "", fmt.Errorf("Broadcast SendRawTransaction fatal, " + err.Error())
+	}
+	return txHash.String(), nil
+}
+
 // 查询使用的节点信息
 func (c *BtcClient) GetNodeInfo() (*Node, error) {
 	return c.Node, nil

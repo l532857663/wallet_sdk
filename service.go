@@ -30,6 +30,8 @@ type NodeService interface {
 	SendRawTransaction(hexTx string) (string, error)
 	BuildPSBTransfer(ins []client.Input, outs []client.Output) (interface{}, error)
 	SignAndSendTaprootTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error)
+	BuildTransferInfoByList(fromAddr []*client.UnspendUTXOList, toAddr []*client.ToAddrDetail, gasPrice, changeAddr string) (interface{}, error)
+	SignListAndSendTransfer(txObj string, hexPrivateKeys []string) (string, error)
 
 	ChainID() (*big.Int, error)
 	GetBlockHeight() (int64, error)

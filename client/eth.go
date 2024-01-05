@@ -367,3 +367,13 @@ func (c *EthClient) GetAddressUTXO(addr, state string) (interface{}, error) {
 func (c *EthClient) SignAndSendTaprootTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error) {
 	return "", fmt.Errorf("This method is not supported yet!")
 }
+
+// 构建多对多交易
+func (c *EthClient) BuildTransferInfoByList(unSpendUTXOList []*UnspendUTXOList, toAddrList []*ToAddrDetail, gasPrice, changeAddr string) (interface{}, error) {
+	return nil, fmt.Errorf("This method is not supported yet!")
+}
+
+// 多个地址的签名出账
+func (c *EthClient) SignListAndSendTransfer(txObj string, hexPrivateKeys []string) (string, error) {
+	return "", fmt.Errorf("This method is not supported yet!")
+}

@@ -202,3 +202,13 @@ func (t *TronClient) GetAddressUTXO(addr, state string) (interface{}, error) {
 func (t *TronClient) SignAndSendTaprootTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error) {
 	return "", fmt.Errorf("This method is not supported yet!")
 }
+
+// 构建多对多交易
+func (t *TronClient) BuildTransferInfoByList(unSpendUTXOList []*UnspendUTXOList, toAddrList []*ToAddrDetail, gasPrice, changeAddr string) (interface{}, error) {
+	return nil, fmt.Errorf("This method is not supported yet!")
+}
+
+// 多个地址的签名出账
+func (t *TronClient) SignListAndSendTransfer(txObj string, hexPrivateKeys []string) (string, error) {
+	return "", fmt.Errorf("This method is not supported yet!")
+}
