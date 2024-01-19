@@ -50,7 +50,7 @@ func GenerateMnemonic(length int, langauge string) *CommonResp {
  *   选择的链类型 e.g.： "BTC"、"ETH"
  */
 
-func GenerateAccountByMnemonic(mnemonic, symbol string) *AccountInfoResp {
+func GenerateAccountByMnemonic(mnemonic, symbol string, purpose *uint32) *AccountInfoResp {
 	res := &AccountInfoResp{}
 	funcName := "GenerateAccountByMnemonic"
 
@@ -76,10 +76,14 @@ func GenerateAccountByMnemonic(mnemonic, symbol string) *AccountInfoResp {
 
 	// 生成账户信息
 	var account wallet.Wallet
+	pp := wallet.DefaultPurpose
+	if purpose != nil {
+		pp = *purpose
+	}
 	if symbol == "BTCTest" {
-		account, err = master.GetWallet(wallet.CoinType(coinType), wallet.Params(&wallet.BTCTestnetParams))
+		account, err = master.GetWallet(wallet.Purpose(pp), wallet.CoinType(coinType), wallet.Params(&wallet.BTCTestnetParams))
 	} else {
-		account, err = master.GetWallet(wallet.CoinType(coinType))
+		account, err = master.GetWallet(wallet.Purpose(pp), wallet.CoinType(coinType))
 	}
 	if err != nil {
 		resp := ResFailed

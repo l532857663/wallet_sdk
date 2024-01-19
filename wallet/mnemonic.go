@@ -7,9 +7,9 @@ import (
 
 func setLanguage(language string) {
 	switch language {
-	case ChineseSimplified:
+	case ChineseSimplified, "CN_S":
 		bip39.SetWordList(wordlists.ChineseSimplified)
-	case ChineseTraditional:
+	case ChineseTraditional, "CN_T":
 		bip39.SetWordList(wordlists.ChineseTraditional)
 	}
 }

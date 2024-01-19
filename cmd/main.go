@@ -13,8 +13,8 @@ func main() {
 	// test3Func()
 	// test4Func()
 	// test5Func()
-	// test6Func()
-	test7Func()
+	test6Func()
+	// test7Func()
 }
 
 var (
@@ -54,7 +54,7 @@ var (
 	// addr   = "2NBeoUKGLyk5ZfSDtAvsfWteYQaAKdUAniF"
 	// addr   = "tb1pnkfdsmf6q4rmjtn3dunrmekxy57eq6xx7mnhthwu9z23u5hceluqvzmvul"
 	toAddr = "tb1qmryulp7lvf56n93qywjh7x9e850yg9l62gjhjk"
-	priKey = "cTAroTKYviiVEqxPmTW43JEU56EFZLhLWYgcxHk8nfBovj72eXbT"
+	priKey = "cUAxLxQT6Wu2yqtk1fSVmFbdAeKnadjYFov2Yok9ZdSoRuPq9Vs9"
 	// priKeyHex = ""
 	priKeyHex = ""
 	txHash    = "07b6936e51f8e7a83cd3f9fd811861224246924dd5b57052917aa87604fb2fa9"
@@ -64,13 +64,15 @@ var (
 )
 
 func testFunc() {
-	// 生成助记词
-	res := wallet_sdk.GenerateMnemonic(length, "")
-	fmt.Printf("res: %+v\n", res)
-	mnemonic = res.Data
+	// // 生成助记词
+	// res := wallet_sdk.GenerateMnemonic(length, "")
+	// fmt.Printf("res: %+v\n", res)
+	// mnemonic = res.Data
+	mnemonic = "exhibit hat fall second legal scrap useless diagram pluck damage copper once"
 
 	// 使用助记词生成账户地址、私钥
-	res1 := wallet_sdk.GenerateAccountByMnemonic(mnemonic, "BTCTest")
+	var purpose uint32 = 86
+	res1 := wallet_sdk.GenerateAccountByMnemonic(mnemonic, "BTCTest", &purpose)
 	fmt.Printf("res: %+v\n", res1)
 	fmt.Printf("res Data: %+v\n", res1.Data)
 	// 使用助记词生成seed
@@ -205,7 +207,7 @@ func test6Func() {
 	// 私钥查询地址
 	wallet_sdk.GetPrikeyAndPubkey(chainName, priKey, priKeyHex)
 	// 查询UTXO信息
-	addr = "tb1qw9kqg0r9gjzduzzms4xguaskt0c0t2wcnwff4j"
+	addr = "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux"
 	res2 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
 	fmt.Printf("res: %+v\n", res2)
 }
@@ -224,8 +226,8 @@ func test7Func() {
 		{TxHash: "303b1e8f45adf1b1d07e1febb8fe0da2e4772862bf4189fbb120c188c5ecd95b", Vout: 1},
 		{TxHash: "7fc39b92f2bc4bd12e5c441bf7e9f3f56cae02995c32ce07d0a14dc1b7ae872c", Vout: 0},
 	}
-	toAddrs := []string{"2NBeoUKGLyk5ZfSDtAvsfWteYQaAKdUAniF"}
-	amounts := []string{"0.0002"}
+	toAddrs := []string{"n4R9ztyWCfkuoX3vmWYwbYcohJRbL4yao1", "n4R9ztyWCfkuoX3vmWYwbYcohJRbL4yao1"}
+	amounts := []string{"0.000003", "0.000003"}
 	changeAddr := ""
 	res5 := wallet_sdk.BuildTransferInfoByBTCList(chainName, froms, utxos, toAddrs, amounts, gasPrice, changeAddr)
 	fmt.Printf("res: %+v\n", res5)

@@ -354,9 +354,6 @@ func GetUTXOListByAddress(chainName, address string) *AddressUTXOListResp {
 		res.Status = resp
 		return res
 	}
-	for _, utxo := range utxoList.([]*client.UnspendUTXOList) {
-		fmt.Printf("utxo: %+v\n", utxo)
-	}
 
 	// 返回结果
 	res.Status = ResSuccess
