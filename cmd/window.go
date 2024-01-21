@@ -27,8 +27,6 @@ func main() {
 	w := a.NewWindow("Wallet 钱包")
 
 	MainContent(w)
-	// 查询地址未花费的UTXO
-	// GetAddressUTXO(w)
 
 	w.Resize(fyne.NewSize(900, 700))
 
@@ -125,7 +123,14 @@ func GenerateWallet() *fyne.Container {
 	)
 	/* ------------------------------- LEFT ------------------------------- */
 	/* ------------------------------- RIGHT ------------------------------- */
-	// right := ""
+	priKey := binding.NewString()
+	address := binding.NewString()
+	right := container.NewVBox(
+		widget.NewLabel("PrivateKey:"),
+		widget.NewLabelWithData(priKey),
+		widget.NewLabel("Address:"),
+		widget.NewLabelWithData(address),
+	)
 	/* ------------------------------- RIGHT ------------------------------- */
 	/* ------------------------------- BUTTON ------------------------------- */
 	// 设置按钮
@@ -146,10 +151,13 @@ func GenerateWallet() *fyne.Container {
 		res1 := wallet_sdk.GenerateAccountByMnemonic(mnemonic, params, &purpose)
 		fmt.Printf("res: %+v\n", res1)
 		fmt.Printf("res Data: %+v\n", res1.Data)
+		accountInfo := res1.Data
+		priKey.Set(accountInfo.PrivateKey)
+		address.Set(accountInfo.Address)
 	})
 	button := container.New(layout.NewGridLayout(2), btn1, btn2)
 	/* ------------------------------- BUTTON ------------------------------- */
-	return container.NewBorder(nil, button, left, nil, content)
+	return container.NewBorder(nil, button, left, right, content)
 }
 
 func getCenter(data string) *fyne.Container {
