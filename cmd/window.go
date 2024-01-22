@@ -7,6 +7,7 @@ import (
 	"strings"
 	"wallet_sdk"
 	"wallet_sdk/client"
+	"wallet_sdk/utils"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -47,16 +48,20 @@ func MainContent(w fyne.Window) {
 
 func GetAddressUTXO() *fyne.Container {
 	tip := widget.NewLabel("Enter address to query UTXO")
-	count := widget.NewLabel("")
+	// 结果信息
+	leftLabel := widget.NewLabel("")
+	// 地址输入框
 	addressInput := widget.NewEntry()
+	// UTXO列表
 	data := binding.BindStringList(
 		&[]string{},
 	)
+	list := utils.NewDataList(data)
+	// 请求按钮
 	query := widget.NewButton("QUERY", func() {
 		if data.Length() > 0 {
 			err := data.Reload()
 			if err != nil {
-				fmt.Printf("data.Reload error: %+v\n", err)
 				return
 			}
 		}
@@ -70,18 +75,16 @@ func GetAddressUTXO() *fyne.Container {
 			sum += unspentUTXO.Amount
 			data.Append(val)
 		}
-		count.SetText(fmt.Sprintf("Number: %v\n Sum: %v", len(utxoList), sum))
+		leftLabel.SetText(fmt.Sprintf("Number: %v\n Sum: %v", len(utxoList), sum))
 	})
-	list := widget.NewListWithData(data,
-		func() fyne.CanvasObject {
-			return widget.NewLabel("template")
-		},
-		func(i binding.DataItem, o fyne.CanvasObject) {
-			o.(*widget.Label).Bind(i.(binding.String))
-		})
+	send := widget.NewButton("Transaction", func() {
+	})
+	button := container.NewHBox(query, send)
+	// 顶部提示
 	top := container.NewVBox(tip, addressInput)
-	left := container.NewVBox(count)
-	return container.NewBorder(top, query, left, nil, list)
+	// 侧边统计
+	left := container.NewVBox(leftLabel)
+	return container.NewBorder(top, button, left, nil, list)
 }
 
 func GenerateWallet() *fyne.Container {
@@ -96,7 +99,6 @@ func GenerateWallet() *fyne.Container {
 	/* ------------------------------- LEFT ------------------------------- */
 	// 设置助记词类型
 	length := widget.NewRadioGroup([]string{"12", "24"}, func(value string) {
-		fmt.Println("Radio set to", value)
 	})
 	length.SetSelected("12")
 	// TODO: 中文暂时显示不出来
