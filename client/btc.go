@@ -147,6 +147,8 @@ func (c *BtcClient) BuildTransferInfo(fromAddr, toAddr, contract, amount, gasPri
 	toAddrList := []*ToAddrDetail{
 		detail,
 	}
+	// 手续费
+	gas := BtcToSatoshi(gasPrice)
 	// 查询FROM地址的UTXO
 	unspendUTXOList := c.getAddressUTXO(fromAddr)
 	if len(unspendUTXOList) < 1 {
@@ -157,18 +159,17 @@ func (c *BtcClient) BuildTransferInfo(fromAddr, toAddr, contract, amount, gasPri
 	// 排序未花费得UTXO
 	DescSortUnspendUTXO(unspendUTXOList)
 	inAmount := big.NewInt(0)
+	outAmount := big.NewInt(0).Add(detail.RawAmount, gas)
 	for _, info := range unspendUTXOList {
 		if info.Amount < 700 {
 			continue
 		}
 		useUTXOList = append(useUTXOList, info)
 		inAmount.Add(inAmount, info.RawAmount)
-		if inAmount.Cmp(detail.RawAmount) > 0 {
+		if inAmount.Cmp(outAmount) > 0 {
 			break
 		}
 	}
-	// 手续费
-	gas := BtcToSatoshi(gasPrice)
 
 	apiTx, err := c.genBtcTransaction(useUTXOList, toAddrList, gas, toAddr)
 	if nil != err {
@@ -312,7 +313,6 @@ func (c *BtcClient) genBtcTransaction(unSpendUTXOList []*UnspendUTXOList, toAddr
 
 // SignAndSendTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error)
 func (c *BtcClient) SignAndSendTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error) {
-	// TODO: btcd依赖库的问题
 	txInfo := &BtcTransferInfo{}
 	err := json.Unmarshal([]byte(txObj), txInfo)
 	if err != nil {

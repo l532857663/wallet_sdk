@@ -29,7 +29,7 @@ func main() {
 
 	MainContent(w)
 
-	w.Resize(fyne.NewSize(900, 700))
+	w.Resize(fyne.NewSize(1100, 700))
 
 	w.Show()
 	a.Run()
@@ -40,7 +40,8 @@ func MainContent(w fyne.Window) {
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Get address Unutxo list", GetAddressUTXO()),
 		container.NewTabItem("Generate wallet", GenerateWallet()),
-		container.NewTabItem("Test TMP", testTmp()),
+		container.NewTabItem("Transaction info", TransactionInfo()),
+		container.NewTabItem("Test TMP", E_G_Box()),
 	)
 	tabs.SetTabLocation(container.TabLocationLeading)
 	w.SetContent(tabs)
@@ -59,12 +60,15 @@ func GetAddressUTXO() *fyne.Container {
 	list := utils.NewDataList(data)
 	// 请求按钮
 	query := widget.NewButton("QUERY", func() {
+		fmt.Printf("wch------ data: %+v\n", data.Length())
 		if data.Length() > 0 {
+			data.Set([]string{})
 			err := data.Reload()
 			if err != nil {
 				return
 			}
 		}
+		fmt.Printf("wch------ data1: %+v\n", data.Length())
 		addr := addressInput.Text
 		fmt.Printf("wch---- addr: %+v\n", addr)
 		res2 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
@@ -75,7 +79,9 @@ func GetAddressUTXO() *fyne.Container {
 			sum += unspentUTXO.Amount
 			data.Append(val)
 		}
-		leftLabel.SetText(fmt.Sprintf("Number: %v\n Sum: %v", len(utxoList), sum))
+		// 侧边栏统计内容
+		leftContent := fmt.Sprintf("Number: %v\n Sum: %v", len(utxoList), sum)
+		leftLabel.SetText(leftContent)
 	})
 	send := widget.NewButton("Transaction", func() {
 	})
@@ -166,7 +172,73 @@ func getCenter(data string) *fyne.Container {
 	return container.New(layout.NewGridWrapLayout(fyne.NewSize(50, 50)), widget.NewLabel(data))
 }
 
-func testTmp() *fyne.Container {
+func TransactionInfo() *fyne.Container {
+	// 选择网络
+	chainName := wallet_sdk.BTC_Testnet
+	chainCombo := widget.NewSelect(wallet_sdk.ChainCombo, func(value string) {
+		chainName = value
+	})
+	// 输入地址
+	fromAddr := widget.NewEntry()
+	fromAddr.SetPlaceHolder("Enter from address")
+	fromAddr.SetText("n1HE1YJ1zF5U5aiX2DNu5WhjE9KFrkSKkx")
+	// 转账金额
+	amount := widget.NewEntry()
+	amount.SetPlaceHolder("Enter from amount")
+	amount.SetText("0.00004")
+	// 转出地址
+	toAddr := widget.NewEntry()
+	toAddr.SetPlaceHolder("Enter to address")
+	toAddr.SetText("2NBeoUKGLyk5ZfSDtAvsfWteYQaAKdUAniF")
+	// 输入地址私钥
+	priKey := widget.NewEntry()
+	priKey.SetPlaceHolder("Enter from private key")
+
+	// 结果提示
+	str := binding.NewString()
+	text := widget.NewLabelWithData(str)
+	text.Wrapping = fyne.TextWrapWord // 设置为单词换行
+	alert := container.NewVBox()
+	alert.Resize(fyne.NewSize(300, 0))
+	alert.Add(text)
+
+	// 交易内容
+	var signData string
+
+	// 操作按钮
+	btn1 := widget.NewButton("Builder", func() {
+		// 查询主币余额
+		res2 := wallet_sdk.GetBalanceByAddress(chainName, fromAddr.Text)
+		// 查询节点gas price
+		gasPriceData := wallet_sdk.GetGasPrice(chainName)
+		gasPrice := gasPriceData.Data.Average
+		// 构建交易
+		res5 := wallet_sdk.BuildTransferInfoByBTC(chainName, fromAddr.Text, toAddr.Text, amount.Text, gasPrice)
+		fmt.Printf("res: %+v\n", res5)
+		if res5.Status.Code == 0 {
+			signData = res5.Data
+			// 提示内容
+			alertStr := fmt.Sprintf("Balance: %+v\n gasPrice: %+v\n", res2, gasPrice)
+			str.Set(alertStr)
+		} else {
+			str.Set(res5.Status.Message)
+		}
+
+	})
+	btn2 := widget.NewButton("Sign&Broadcast", func() {
+		if priKey.Text == "" || signData == "" {
+			str.Set("Please check what you entered!")
+		}
+		res7 := wallet_sdk.SignAndSendTransferInfo(chainName, priKey.Text, signData)
+		str.Set(res7)
+	})
+	button := container.New(layout.NewGridLayout(2), btn1, btn2)
+
+	from := container.NewVBox(chainCombo, fromAddr, amount, toAddr, button, alert)
+	return from
+}
+
+func E_G_Box() *fyne.Container {
 	text1 := canvas.NewText("Hello", color.Black)
 	text2 := canvas.NewText("There", color.Black)
 	text3 := canvas.NewText("(right)", color.Black)

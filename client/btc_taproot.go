@@ -12,7 +12,6 @@ import (
 
 // 签名并广播Taproot交易
 func (c *BtcClient) SignAndSendTaprootTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error) {
-	// TODO: btcd依赖库的问题
 	txInfo := &BtcTransferInfo{}
 	err := json.Unmarshal([]byte(txObj), txInfo)
 	if err != nil {

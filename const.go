@@ -53,6 +53,12 @@ var (
 	GasFast, _    = decimal.NewFromString("1.5")
 	GasHigh, _    = decimal.NewFromString("1.3")
 	GasAverage, _ = decimal.NewFromString("1.1")
+
+	// 网络选择器
+	ChainCombo = []string{
+		ETH_Rinkeby, ETH_Sepolia,
+		BTC_Mainnet, BTC_Testnet,
+	}
 )
 
 var (
