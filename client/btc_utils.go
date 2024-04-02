@@ -60,6 +60,16 @@ func PreCalculateSerializeSize(apiTx *wire.MsgTx) int {
 	//手续费计算规则： 148*len(apiTx.TxIn) + 34*len(apiTx.TxOut) + 10
 }
 
+func PayToPubKeyHashScript(pubKeyHash []byte) ([]byte, error) {
+	return txscript.NewScriptBuilder().AddOp(txscript.OP_DUP).AddOp(txscript.OP_HASH160).
+		AddData(pubKeyHash).AddOp(txscript.OP_EQUALVERIFY).AddOp(txscript.OP_CHECKSIG).
+		Script()
+}
+
+func PayToWitnessPubKeyHashScript(pubKeyHash []byte) ([]byte, error) {
+	return txscript.NewScriptBuilder().AddOp(txscript.OP_0).AddData(pubKeyHash).Script()
+}
+
 // Demo
 func (c *BtcClient) getAddressUTXOForDemo(address string) []*UnspendUTXOList {
 	var res []*UnspendUTXOList

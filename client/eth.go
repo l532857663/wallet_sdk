@@ -340,6 +340,11 @@ func (c *EthClient) GetNodeInfo() (*Node, error) {
 	return c.Node, nil
 }
 
+// 查询地址是否是Taproot类型
+func (c *EthClient) GetAddressIsTaproot(addr string) bool {
+	return false
+}
+
 // 关闭链接
 func (node *EthClient) Close() {
 	if node.Client != nil {
@@ -361,11 +366,6 @@ func (c *EthClient) BuildPSBTransfer(ins []Input, outs []Output) (interface{}, e
 // 查询地址UTXO列表
 func (c *EthClient) GetAddressUTXO(addr, state string) (interface{}, error) {
 	return nil, fmt.Errorf("This method is not supported yet!")
-}
-
-// 签名并广播Taproot交易
-func (c *EthClient) SignAndSendTaprootTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error) {
-	return "", fmt.Errorf("This method is not supported yet!")
 }
 
 // 构建多对多交易

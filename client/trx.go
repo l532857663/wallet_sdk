@@ -173,6 +173,11 @@ func (t *TronClient) GetNodeInfo() (*Node, error) {
 	return t.Node, nil
 }
 
+// 查询地址是否是Taproot类型
+func (c *TronClient) GetAddressIsTaproot(addr string) bool {
+	return false
+}
+
 // 关闭链接
 func (node *TronClient) Close() {
 	if node.client != nil {
@@ -196,11 +201,6 @@ func (t *TronClient) BuildPSBTransfer(ins []Input, outs []Output) (interface{}, 
 // 查询地址UTXO列表
 func (t *TronClient) GetAddressUTXO(addr, state string) (interface{}, error) {
 	return nil, fmt.Errorf("This method is not supported yet!")
-}
-
-// 签名并广播Taproot交易
-func (t *TronClient) SignAndSendTaprootTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error) {
-	return "", fmt.Errorf("This method is not supported yet!")
 }
 
 // 构建多对多交易

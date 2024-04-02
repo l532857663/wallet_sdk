@@ -18,7 +18,6 @@ import (
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/minchenzz/brc20tool/pkg/btcapi/mempool"
 )
 
@@ -211,7 +210,7 @@ func (c *BtcClient) getAddressUTXO(address string) []*UnspendUTXOList {
 		amount := unspend.Output.Value
 		tmp := &UnspendUTXOList{
 			TxHash:       unspend.Outpoint.Hash.String(),
-			ScriptPubKey: hexutil.Encode(spk)[2:],
+			ScriptPubKey: hex.EncodeToString(spk),
 			Vout:         unspend.Outpoint.Index,
 			Amount:       amount,
 			RawAmount:    big.NewInt(amount),
@@ -319,31 +318,99 @@ func (c *BtcClient) SignAndSendTransfer(txObj, hexPrivateKey string, chainId *bi
 		return "", err
 	}
 	apiTx := txInfo.ApiTx
-	for idx, rti := range txInfo.UTXOList {
-		prevOutScript, err := hex.DecodeString(rti.ScriptPubKey)
-		if err != nil {
-			fmt.Printf("invalid script key error: %+v\n", err)
-			return "", err
-		}
-		_, err = c.sign(apiTx, hexPrivateKey, idx, prevOutScript)
-		if err != nil {
-			fmt.Printf("Sign err: %+v\n", err)
-			return "", err
-		}
+	fmt.Printf("wch----- apiTx: %+v\n", apiTx)
+	// 旧的流程
+	// // 签名
+	// for idx, rti := range txInfo.UTXOList {
+	// 	prevOutScript, err := hex.DecodeString(rti.ScriptPubKey)
+	// 	if err != nil {
+	// 		fmt.Printf("invalid script key error: %+v\n", err)
+	// 		return "", err
+	// 	}
+	// 	_, err = c.sign(apiTx, hexPrivateKey, idx, prevOutScript)
+	// 	if err != nil {
+	// 		fmt.Printf("Sign err: %+v\n", err)
+	// 		return "", err
+	// 	}
+	// }
+	// 解析私钥
+	wif, err := btcutil.DecodeWIF(hexPrivateKey)
+	if err != nil {
+		return "", fmt.Errorf("SignTx DecodeWIF fatal, " + err.Error())
 	}
-	// 签名
-	var buf bytes.Buffer
-	buf.Grow(hex.EncodedLen(apiTx.SerializeSize()))
-	if err := apiTx.Serialize(hex.NewEncoder(&buf)); err != nil {
+	if !wif.IsForNet(c.Params) {
+		return "", fmt.Errorf("SignTx IsForNet not matched")
+	}
+	prevOutFetcher := txscript.NewMultiPrevOutFetcher(nil)
+	var privateKeys []*btcec.PrivateKey
+	for i := 0; i < len(apiTx.TxIn); i++ {
+		input := apiTx.TxIn[i]
+		utxoInfo := txInfo.UTXOList[i]
+		outPoint := &input.PreviousOutPoint
+		pkScript, err := hex.DecodeString(utxoInfo.ScriptPubKey)
+		if err != nil {
+			return "", err
+		}
+		txOut := wire.NewTxOut(utxoInfo.Amount, pkScript)
+		prevOutFetcher.AddPrevOut(*outPoint, txOut)
+		privateKeys = append(privateKeys, wif.PrivKey)
+	}
+
+	if err := Sign(apiTx, privateKeys, prevOutFetcher); err != nil {
 		return "", err
 	}
-	fmt.Printf("apiTx info: %+v\n", buf.String())
+
+	raw, _ := getTxHex(apiTx)
+	fmt.Printf("apiTx txHash: %s, info: %s\n", apiTx.TxHash(), raw)
 
 	txHash, err := c.Client.SendRawTransaction(apiTx, false)
 	if nil != err {
 		return "", fmt.Errorf("Broadcast SendRawTransaction fatal, " + err.Error())
 	}
 	return txHash.String(), nil
+}
+
+func Sign(tx *wire.MsgTx, privateKeys []*btcec.PrivateKey, prevOutFetcher *txscript.MultiPrevOutFetcher) error {
+	for i, in := range tx.TxIn {
+		prevOut := prevOutFetcher.FetchPrevOutput(in.PreviousOutPoint)
+		txSigHashes := txscript.NewTxSigHashes(tx, prevOutFetcher)
+		privKey := privateKeys[i]
+		if txscript.IsPayToTaproot(prevOut.PkScript) {
+			witness, err := txscript.TaprootWitnessSignature(tx, txSigHashes, i, prevOut.Value, prevOut.PkScript, txscript.SigHashDefault, privKey)
+			if err != nil {
+				return err
+			}
+			in.Witness = witness
+		} else if txscript.IsPayToPubKeyHash(prevOut.PkScript) {
+			sigScript, err := txscript.SignatureScript(tx, i, prevOut.PkScript, txscript.SigHashAll, privKey, true)
+			if err != nil {
+				return err
+			}
+			in.SignatureScript = sigScript
+		} else {
+			pubKeyBytes := privKey.PubKey().SerializeCompressed()
+			script, err := PayToPubKeyHashScript(btcutil.Hash160(pubKeyBytes))
+			if err != nil {
+				return err
+			}
+			amount := prevOut.Value
+			witness, err := txscript.WitnessSignature(tx, txSigHashes, i, amount, script, txscript.SigHashAll, privKey, true)
+			if err != nil {
+				return err
+			}
+			in.Witness = witness
+
+			if txscript.IsPayToScriptHash(prevOut.PkScript) {
+				redeemScript, err := PayToWitnessPubKeyHashScript(btcutil.Hash160(pubKeyBytes))
+				if err != nil {
+					return err
+				}
+				in.SignatureScript = append([]byte{byte(len(redeemScript))}, redeemScript...)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (c *BtcClient) sign(apiTx *wire.MsgTx, privateKey string, utxoIdx int, utxoSciptPubKey []byte) (string, error) {
@@ -470,6 +537,31 @@ func (c *BtcClient) SignListAndSendTransfer(txObj string, hexPrivateKeys []strin
 // 查询使用的节点信息
 func (c *BtcClient) GetNodeInfo() (*Node, error) {
 	return c.Node, nil
+}
+
+// 查询地址是否是Taproot类型
+func (c *BtcClient) GetAddressIsTaproot(address string) bool {
+	addr, err := btcutil.DecodeAddress(address, c.Params)
+	if err != nil {
+		fmt.Printf("btcutil.DecodeAddress Error: %+v\n", err)
+		return false
+	}
+	switch t := addr.(type) {
+	case *btcutil.AddressPubKeyHash:
+		fmt.Println("wch---- PKH")
+	case *btcutil.AddressScriptHash:
+		fmt.Println("wch---- SH")
+	case *btcutil.AddressWitnessPubKeyHash:
+		fmt.Println("wch---- WPKH")
+	case *btcutil.AddressWitnessScriptHash:
+		fmt.Println("wch---- WSH")
+	case *btcutil.AddressTaproot:
+		fmt.Println("wch---- T")
+		return true
+	default:
+		fmt.Printf("invalid recipet address type: %v\n", t)
+	}
+	return false
 }
 
 // 关闭链接

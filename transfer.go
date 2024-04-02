@@ -138,7 +138,7 @@ func BuildContractInfo(chainName, contract, abiContent, gasPrice, nonce, params 
  * apiTx:
  *   交易信息
  */
-func SignAndSendTransferInfo(chainName, priKey, apiTx string) *CommonResp {
+func SignAndSendTransferInfo(chainName, priKey, apiTx, addr string) *CommonResp {
 	res := &CommonResp{}
 	funcName := "SignTransferInfo"
 
@@ -155,13 +155,8 @@ func SignAndSendTransferInfo(chainName, priKey, apiTx string) *CommonResp {
 	chainId, _ := cli.ChainID()
 
 	var txHash string
-	if false {
-		// 签名并广播交易
-		txHash, err = cli.SignAndSendTransfer(apiTx, priKey, chainId, 0)
-	} else {
-		// 签名并广播TaprootUTXO
-		txHash, err = cli.SignAndSendTaprootTransfer(apiTx, priKey, chainId, 0)
-	}
+	// 签名并广播交易
+	txHash, err = cli.SignAndSendTransfer(apiTx, priKey, chainId, 0)
 	if err != nil {
 		resp := ResFailed
 		resp.Message = fmt.Sprintf("[%s] sign transfer error: %+v", funcName, err)

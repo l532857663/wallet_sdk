@@ -14,6 +14,7 @@ type NodeService interface {
 	GetBalanceByContract(addr, contractAddr string) (*big.Int, error)
 	GetTransactionByHash(txHash string) (interface{}, bool, error)
 	GetAddressUTXO(addr, state string) (interface{}, error)
+	GetAddressIsTaproot(addr string) bool
 
 	// 查询合约信息
 	GetDecimals(contractAddr string) (*big.Int, error)
@@ -29,7 +30,6 @@ type NodeService interface {
 	SignAndSendTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error)
 	SendRawTransaction(hexTx string) (string, error)
 	BuildPSBTransfer(ins []client.Input, outs []client.Output) (interface{}, error)
-	SignAndSendTaprootTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error)
 	BuildTransferInfoByList(fromAddr []*client.UnspendUTXOList, toAddr []*client.ToAddrDetail, gasPrice, changeAddr string) (interface{}, error)
 	SignListAndSendTransfer(txObj string, hexPrivateKeys []string) (string, error)
 

@@ -16,7 +16,7 @@ func NewDataList(bindings binding.ExternalStringList) *widget.List {
 			option := widget.NewLabel("")
 			check := widget.NewCheck("", func(checked bool) {
 				fmt.Println("checked", checked)
-				fmt.Println("wch--- data: %+v\n", option.Text)
+				fmt.Printf("wch--- data: %+v\n", option.Text)
 			})
 			return container.NewHBox(check, option)
 		},
