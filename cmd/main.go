@@ -12,8 +12,8 @@ func main() {
 	// test2Func()
 	// test3Func()
 	// test4Func()
-	// test5Func()
-	test6Func()
+	test5Func()
+	// test6Func()
 	// test7Func()
 }
 
@@ -50,15 +50,14 @@ var (
 
 	// BTC
 	chainName = wallet_sdk.BTC_Testnet
-	addr      = "tb1pg0uc7ujx6rplw4wj73etg505jh49k63s7wc3kyngf73ze7ffue4skru6ld"
+	// chainName = wallet_sdk.BTC_Mainnet
+	addr = "tb1pg0uc7ujx6rplw4wj73etg505jh49k63s7wc3kyngf73ze7ffue4skru6ld"
 	// addr   = "2NBeoUKGLyk5ZfSDtAvsfWteYQaAKdUAniF"
 	// addr   = "tb1pnkfdsmf6q4rmjtn3dunrmekxy57eq6xx7mnhthwu9z23u5hceluqvzmvul"
-	toAddr = "tb1qmryulp7lvf56n93qywjh7x9e850yg9l62gjhjk"
-	priKey = "cUAxLxQT6Wu2yqtk1fSVmFbdAeKnadjYFov2Yok9ZdSoRuPq9Vs9"
-	// priKeyHex = ""
+	toAddr    = "tb1qluw5qatmke9tqlu5wznp8u0r05lccpzhz23f5e"
+	priKey    = ""
 	priKeyHex = ""
 	txHash    = "07b6936e51f8e7a83cd3f9fd811861224246924dd5b57052917aa87604fb2fa9"
-	// chainName = wallet_sdk.BTC_Mainnet
 	// addr      = "36F7BBBLxASGaAmgPnN15qLMUTnH7CTp16"
 	// addr = "bc1ptz34pme4qp43qv6ykp3r0tqz4scn8frzg9e53m034w9st9ncpums67r7sv"
 )
@@ -192,24 +191,24 @@ func test5Func() {
 	// 	fmt.Printf("utxo: %+v\n", utxo)
 	// }
 	// // 查询节点gas price
-	// gasPriceData := wallet_sdk.GetGasPrice(chainName)
-	// // fmt.Printf("res: %+v\n", gasPriceData.Data)
-	// gasPrice := gasPriceData.Data.Average
-	// fmt.Printf("gasPrice: %+v\n", gasPrice)
+	gasPriceData := wallet_sdk.GetGasPrice(chainName)
+	fmt.Printf("res: %+v\n", gasPriceData.Data)
+	gasPrice := gasPriceData.Data.Average
+	fmt.Printf("gasPrice: %+v\n", gasPrice)
 
 	// 构建交易
-	gasPrice := "0.00000486"
-	res5 := wallet_sdk.BuildPSBTransferInfo(chainName, gasPrice)
+	// gasPrice := "0.00000486"
+	res5 := wallet_sdk.BuildPSBTransferInfo(chainName, priKey, gasPrice)
 	fmt.Printf("res: %+v\n", res5)
 }
 
 func test6Func() {
 	// 私钥查询地址
 	wallet_sdk.GetPrikeyAndPubkey(chainName, priKey, priKeyHex)
-	// 查询UTXO信息
-	addr = "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux"
-	res2 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
-	fmt.Printf("res: %+v\n", res2)
+	// // 查询UTXO信息
+	// addr = "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux"
+	// res2 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
+	// fmt.Printf("res: %+v\n", res2)
 }
 
 func test7Func() {

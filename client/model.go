@@ -36,13 +36,25 @@ type ToAddrDetail struct {
 }
 
 type Input struct {
-	OutTxId  string `json:"out_tx_id"`
-	OutIndex uint32 `json:"out_index"`
+	TxId              string
+	VOut              uint32
+	Sequence          uint32
+	Amount            int64
+	Address           string
+	PrivateKey        string
+	NonWitnessUtxo    string
+	MasterFingerprint uint32
+	DerivationPath    string
+	PublicKey         string
 }
 
 type Output struct {
-	Address string `json:"address"`
-	Amount  uint64 `json:"amount"`
+	Address           string
+	Amount            int64
+	IsChange          bool
+	MasterFingerprint uint32
+	DerivationPath    string
+	PublicKey         string
 }
 
 type UtxoType int

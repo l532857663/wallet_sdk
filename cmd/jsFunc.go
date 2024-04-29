@@ -37,6 +37,8 @@ func InitJsFunc() {
 	// 通用方法
 	js.Global().Set("ethToGwei", js.FuncOf(ethToGwei))
 	js.Global().Set("gweiToEth", js.FuncOf(gweiToEth))
+	// 设置节点
+	js.Global().Set("setNodeInfo", js.FuncOf(setNodeInfo))
 	<-done
 }
 
@@ -52,7 +54,6 @@ func generateMnemonic(this js.Value, args []js.Value) interface{} {
 	// 处理参数
 	length := args[0].Int()
 	language := args[1].String()
-
 	res := wallet_sdk.GenerateMnemonic(length, language)
 	return returnResponse(res)
 }
@@ -61,8 +62,13 @@ func generateAccountByMnemonic(this js.Value, args []js.Value) interface{} {
 	// 处理参数
 	mnemonic := args[0].String()
 	symbol := args[1].String()
+	purpose := args[2].Int()
+	var pp uint32
+	if purpose != 0 {
+		pp = uint32(purpose)
+	}
 
-	res := wallet_sdk.GenerateAccountByMnemonic(mnemonic, symbol)
+	res := wallet_sdk.GenerateAccountByMnemonic(mnemonic, symbol, &pp)
 	return returnResponse(res)
 }
 
@@ -247,6 +253,20 @@ func ethToGwei(this js.Value, args []js.Value) interface{} {
 func gweiToEth(this js.Value, args []js.Value) interface{} {
 	// 处理参数
 	value := args[0].String()
+	return client.WeiToGwei(value)
+}
+func setNodeInfo(this js.Value, args []js.Value) interface{} {
+	// 处理参数
+	node := client.Node{
+		ChainType: wallet_sdk.ChainRelationForETH,
+		Ip:        "http://192.168.10.173:8545",
+		ChainId:   "11155111",
+	}
+	chainName := args[0].String()
+	chainType := args[1].String()
+	rpcURL := args[2].String()
+	chainId := args[3].String()
+	wallet_sdk.SetNodeInfo(chainName, node.ChainType, node.Ip, "", "", "", node.ChainId, "")
 	return client.WeiToGwei(value)
 }
 

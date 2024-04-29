@@ -26,18 +26,25 @@ const (
 	HT_Testnet      = "ht_test"
 	BSC_Testnet     = "bsc_test"
 	POLYGON_Testnet = "polygon_test"
-	TRX_Nile        = "trx_nile"
-	BTC_Testnet     = "btc_test"
-	BTC_Mainnet     = "btc_main"
+	// TRON系网络
+	TRX_Nile = "trx_nile"
+	// BTC系网络
+	BTC_Testnet = "btc_test"
+	BTC_Mainnet = "btc_main"
+	// SOLANA系网络
 
 	// chain Symbol
-	MainCoinEth = "ETH"
-	MainCoinBSC = "BSC"
+	MainCoinBTC    = "BTC"
+	MainCoinEth    = "ETH"
+	MainCoinBSC    = "BSC"
+	MainCoinTRON   = "TRX"
+	MainCoinSOLANA = "SOL"
 
 	// chain Type
-	ChainRelationForBTC = "BTC"
-	ChainRelationForETH = "ETH"
-	ChainRelationForTRX = "TRX"
+	ChainRelationForBTC  = "BTC"
+	ChainRelationForETH  = "ETH"
+	ChainRelationForTRON = "TRON"
+	ChainRelationForSOL  = "SOL"
 )
 
 var (
@@ -96,7 +103,7 @@ var (
 	}
 
 	TRXTestnet = client.Node{
-		ChainType: ChainRelationForTRX,
+		ChainType: ChainRelationForTRON,
 		Ip:        "grpc.nile.trongrid.io",
 		Port:      50051,
 		ChainId:   "5",
@@ -104,7 +111,7 @@ var (
 
 	BTCTestnet = client.Node{
 		ChainType: ChainRelationForBTC,
-		Ip:        "128.140.73.158",
+		Ip:        "192.168.13.167",
 		Port:      18443,
 		User:      "btc",
 		Password:  "btc2021",

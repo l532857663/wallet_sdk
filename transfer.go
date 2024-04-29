@@ -138,7 +138,7 @@ func BuildContractInfo(chainName, contract, abiContent, gasPrice, nonce, params 
  * apiTx:
  *   交易信息
  */
-func SignAndSendTransferInfo(chainName, priKey, apiTx, addr string) *CommonResp {
+func SignAndSendTransferInfo(chainName, priKey, apiTx string) *CommonResp {
 	res := &CommonResp{}
 	funcName := "SignTransferInfo"
 
@@ -228,7 +228,7 @@ func BuildTransferInfoByBTC(chainName, fromAddr, toAddr, amount, gasPrice string
 	return res
 }
 
-func BuildPSBTransferInfo(chainName, gasPrice string) *CommonResp {
+func BuildPSBTransferInfo(chainName, priKey, gasPrice string) *CommonResp {
 	res := &CommonResp{}
 	funcName := "BuildPSBTransferInfo"
 
@@ -244,6 +244,22 @@ func BuildPSBTransferInfo(chainName, gasPrice string) *CommonResp {
 
 	// Gas费单位转化
 	fmt.Printf("test gasPrice: %+v\n", gasPrice)
+
+	// 输入输出
+	Ins := []client.Input{
+		client.Input{
+			TxId:       "f54e6280170f929fcf10630d2766125b9422e69855f2b17e6edae218e874413f",
+			VOut:       0,
+			Address:    "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux",
+			PrivateKey: priKey,
+		},
+	}
+	Outs := []client.Output{
+		client.Output{
+			Address: "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux",
+			Amount:  1000,
+		},
+	}
 
 	// 创建交易结构
 	TxInfo, err := cli.BuildPSBTransfer(Ins, Outs)

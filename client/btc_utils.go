@@ -35,14 +35,6 @@ func NewPubkeyHash(encodedAddr string, net *chaincfg.Params) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid recipet address: %w", err)
 	}
-	// switch t := addr.(type) {
-	// case *btcutil.AddressPubKeyHash:
-	// case *btcutil.AddressScriptHash:
-	// case *btcutil.AddressWitnessPubKeyHash:
-	// case *btcutil.AddressWitnessScriptHash:
-	// default:
-	// 	return nil, fmt.Errorf("invalid recipet address type: %v", t)
-	// }
 	if !addr.IsForNet(net) {
 		return nil, fmt.Errorf("%s is for the wrong network", encodedAddr)
 	}

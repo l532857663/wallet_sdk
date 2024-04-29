@@ -208,7 +208,10 @@ func TestAccount(mnemonic, symbol string) {
 
 func GetPrikeyAndPubkey(chainName, wifKey, hexKey string) {
 	funcName := "GetPrikeyAndPubkeyByWIF"
-	net := &chaincfg.TestNet3Params
+	net := &chaincfg.MainNetParams
+	if chainName == BTC_Testnet {
+		net = &chaincfg.TestNet3Params
+	}
 	if wifKey != "" {
 		key, _ := client.GetPrikeyByWIF(wifKey, net)
 		client.GetBTCAddress(key, net)

@@ -232,7 +232,7 @@ func TransactionInfo() *fyne.Container {
 		if priKey.Text == "" || signData == "" {
 			str.Set("Please check what you entered!")
 		}
-		res7 := wallet_sdk.SignAndSendTransferInfo(chainName, priKey.Text, signData, fromAddr.Text)
+		res7 := wallet_sdk.SignAndSendTransferInfo(chainName, priKey.Text, signData)
 		str.Set(res7.Data)
 	})
 	button := container.New(layout.NewGridLayout(2), btn1, btn2)
