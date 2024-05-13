@@ -11,14 +11,14 @@ import (
 
 func Symbol2CoinType(symbol string) uint32 {
 	switch symbol {
-	case "BTC":
-		return wallet.BTC
-	case "BTCTest":
+	case "BTC", "BTCTest":
 		return wallet.BTC
 	case "ETH":
 		return wallet.ETH
-	case "TRX":
+	case "TRON":
 		return wallet.TRX
+	case "SOLANA":
+		return wallet.SOL
 	default:
 		// 暂不支持改链
 		return wallet.Zero

@@ -16,6 +16,13 @@ var (
 	USDTParams       = chaincfg.MainNetParams
 )
 
+var (
+	GetParamsList = map[byte]chaincfg.Params{
+		0x80: BTCParams,
+		0xef: BTCTestnetParams,
+	}
+)
+
 func init() {
 	// ltc net params
 	// https://github.com/litecoin-project/litecoin/blob/master/src/chainparams.cpp

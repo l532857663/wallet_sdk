@@ -9,13 +9,13 @@ var (
 	Ins = []client.Input{
 		{
 			// 1000
-			OutTxId:  "1d3b6d58e81c380301d77a024fa358eaefd8883f63e94ec205bea1ca16cd6cdc",
-			OutIndex: 0,
+			TxId: "1d3b6d58e81c380301d77a024fa358eaefd8883f63e94ec205bea1ca16cd6cdc",
+			VOut: 0,
 		},
 		{
 			// 14000
-			OutTxId:  "303b1e8f45adf1b1d07e1febb8fe0da2e4772862bf4189fbb120c188c5ecd95b",
-			OutIndex: 1,
+			TxId: "303b1e8f45adf1b1d07e1febb8fe0da2e4772862bf4189fbb120c188c5ecd95b",
+			VOut: 1,
 		},
 	}
 	Outs = []client.Output{

@@ -7,8 +7,9 @@ import (
 	"wallet_sdk/utils"
 	"wallet_sdk/wallet"
 
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/btcutil/base58"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 /**
@@ -50,7 +51,7 @@ func GenerateMnemonic(length int, langauge string) *CommonResp {
  *   选择的链类型 e.g.： "BTC"、"ETH"
  */
 
-func GenerateAccountByMnemonic(mnemonic, symbol string, purpose *uint32) *AccountInfoResp {
+func GenerateAccountByMnemonic(mnemonic, symbol string, addressIndex *uint32) *AccountInfoResp {
 	res := &AccountInfoResp{}
 	funcName := "GenerateAccountByMnemonic"
 
@@ -73,18 +74,16 @@ func GenerateAccountByMnemonic(mnemonic, symbol string, purpose *uint32) *Accoun
 		res.Status = resp
 		return res
 	}
+	master.Opt.CoinType = coinType
 
 	// 生成账户信息
-	var account wallet.Wallet
-	pp := wallet.DefaultPurpose
-	if purpose != nil {
-		pp = *purpose
+	if addressIndex != nil {
+		master.Opt.AddressIndex = *addressIndex
 	}
 	if symbol == "BTCTest" {
-		account, err = master.GetWallet(wallet.Purpose(pp), wallet.CoinType(coinType), wallet.Params(&wallet.BTCTestnetParams))
-	} else {
-		account, err = master.GetWallet(wallet.Purpose(pp), wallet.CoinType(coinType))
+		master.Opt.Params = &wallet.BTCTestnetParams
 	}
+	account, err := master.GetWallet(wallet.CoinType(master.Opt.CoinType), wallet.Params(master.Opt.Params), wallet.AddressIndex(master.Opt.AddressIndex))
 	if err != nil {
 		resp := ResFailed
 		resp.Message = fmt.Sprintf("[%s] get account error: %+v", funcName, err)
@@ -114,6 +113,10 @@ func GenerateAccountByMnemonic(mnemonic, symbol string, purpose *uint32) *Accoun
 		Address:    address,
 		PrivateKey: priKey,
 	}
+	// BTC多地址处理
+	if account.GetSymbol() == MainCoinBTC {
+		accountInfo.BtcAddrList = getBtcMultiAddr(master)
+	}
 
 	// 返回结果
 	res.Status = ResSuccess
@@ -136,33 +139,56 @@ func ImportAddressByPrikey(prikey, symbol string) *AccountInfoResp {
 	res := &AccountInfoResp{}
 	funcName := "ImportAddressByPrikey"
 
-	if len(prikey) != 64 {
-		if len(prikey) == 66 && prikey[:2] == "0x" {
-			prikey = prikey[2:]
-		} else {
-			resp := ResFailed
-			resp.Message = fmt.Sprintf("[%s] the private_key error", funcName)
-			res.Status = resp
-			return res
-		}
-	}
-
-	// 私钥
-	priKey, err := crypto.HexToECDSA(prikey)
+	key, err := client.CheckPrivateKey(prikey)
 	if err != nil {
 		resp := ResFailed
-		resp.Message = fmt.Sprintf("[%s] get address error: %+v", funcName, err)
+		resp.Message = fmt.Sprintf("[%s] check private key error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+	fmt.Printf("wch---- key: %+v\n", key)
+
+	// 获取coinType
+	coinType := utils.Symbol2CoinType(symbol)
+	if coinType == wallet.Zero {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] this chain [%s] is not supported for now", funcName, symbol)
+		res.Status = resp
+		return res
+	}
+
+	account, err := wallet.NewWalletByPrivateKey(key, wallet.CoinType(coinType))
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] new wallet by private key error: %+v", funcName, err)
 		res.Status = resp
 		return res
 	}
 
 	// 账户地址
-	pubkey := (*priKey).PublicKey
-	address := crypto.PubkeyToAddress(pubkey).Hex()
-
+	address, _ := account.GetAddress()
+	// 私钥
+	priKey, _ := account.GetPrivateKey()
 	accountInfo := &AccountInfo{
 		Address:    address,
-		PrivateKey: prikey,
+		PrivateKey: priKey,
+	}
+	// 网络类型
+	decoded := base58.Decode(prikey)
+	if symbol == MainCoinBTC && len(decoded) > 0 {
+		net, ok := wallet.GetParamsList[decoded[0]]
+		if ok {
+			wif, _ := btcutil.NewWIF(key, &net, false)
+			for _, t := range client.BTCAddrList {
+				addr, _ := client.GetBTCAddress(key, &net, t)
+				tmp := BtcAddress{
+					Address:     addr,
+					AddressType: t,
+					PrivateKey:  wif.String(),
+				}
+				accountInfo.BtcAddrList = append(accountInfo.BtcAddrList, tmp)
+			}
+		}
 	}
 
 	// 返回结果
@@ -206,20 +232,43 @@ func TestAccount(mnemonic, symbol string) {
 	}
 }
 
-func GetPrikeyAndPubkey(chainName, wifKey, hexKey string) {
+func GetPrikeyAndPubkey(chainName, wifKey, hexKey string) string {
 	funcName := "GetPrikeyAndPubkeyByWIF"
 	net := &chaincfg.MainNetParams
 	if chainName == BTC_Testnet {
 		net = &chaincfg.TestNet3Params
 	}
+	addr := ""
 	if wifKey != "" {
 		key, _ := client.GetPrikeyByWIF(wifKey, net)
-		client.GetBTCAddress(key, net)
+		addr, _ = client.GetBTCAddress(key, net, client.BTCAddrLegacy)
 	} else if hexKey != "" {
-		key, _ := client.GetPrikeyByHex(hexKey, net)
-		client.GetBTCAddress(key, net)
+		key, _ := client.GetPrikeyByHex(hexKey)
+		addr, _ = client.GetBTCAddress(key, net, client.BTCAddrLegacy)
 	} else {
 		fmt.Printf("[%s] params error %s, %s!", funcName, wifKey, hexKey)
 	}
-	return
+	return addr
+}
+
+func getBtcMultiAddr(master *wallet.Key) []BtcAddress {
+	var btcAddrList []BtcAddress
+	for i, t := range client.BTCAddrList {
+		master.Opt.Purpose = wallet.BtcPurposeList[i]
+		account, err := master.GetWallet(wallet.Purpose(master.Opt.Purpose), wallet.CoinType(master.Opt.CoinType), wallet.Params(master.Opt.Params), wallet.AddressIndex(master.Opt.AddressIndex))
+		if err != nil {
+			continue
+		}
+		key := account.GetKey().Private
+		net := master.Opt.Params
+		wif, _ := btcutil.NewWIF(key, net, false)
+		addr, _ := client.GetBTCAddress(key, net, t)
+		tmp := BtcAddress{
+			Address:     addr,
+			AddressType: t,
+			PrivateKey:  wif.String(),
+		}
+		btcAddrList = append(btcAddrList, tmp)
+	}
+	return btcAddrList
 }

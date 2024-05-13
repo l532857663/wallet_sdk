@@ -7,14 +7,20 @@ import (
 )
 
 func main() {
+	// 生成助记词、使用助记词生成私钥、地址、生成seed
 	// testFunc()
+	// 查询数据(自定义节点信息、余额、nonce、gas、contract、交易详情、块高等)
 	// test1Func()
+	// 导入私钥生成钱包信息
 	// test2Func()
+	// ETH的交易
 	// test3Func()
+	// BTC的交易
 	// test4Func()
+	// 部分签名出账
 	test5Func()
+	// 多地址签名出账
 	// test6Func()
-	// test7Func()
 }
 
 var (
@@ -63,20 +69,18 @@ var (
 )
 
 func testFunc() {
-	// // 生成助记词
-	// res := wallet_sdk.GenerateMnemonic(length, "")
-	// fmt.Printf("res: %+v\n", res)
-	// mnemonic = res.Data
-	mnemonic = "exhibit hat fall second legal scrap useless diagram pluck damage copper once"
+	// 生成助记词
+	res := wallet_sdk.GenerateMnemonic(length, "")
+	fmt.Printf("res: %+v\n", res)
+	mnemonic = res.Data
 
 	// 使用助记词生成账户地址、私钥
-	var purpose uint32 = 86
-	res1 := wallet_sdk.GenerateAccountByMnemonic(mnemonic, "BTCTest", &purpose)
+	var addressIndex uint32 = 0
+	res1 := wallet_sdk.GenerateAccountByMnemonic(mnemonic, "ETH", &addressIndex)
 	fmt.Printf("res: %+v\n", res1)
 	fmt.Printf("res Data: %+v\n", res1.Data)
 	// 使用助记词生成seed
 	// wallet_sdk.TestAccount(mnemonic, "BTC")
-	wallet_sdk.GetPrikeyAndPubkey(chainName, res1.Data.PrivateKey, "")
 
 	return
 }
@@ -85,7 +89,7 @@ func test1Func() {
 	// 自定义节点信息
 	chainName = "ethTest"
 	node := client.Node{
-		ChainType: wallet_sdk.ChainRelationForETH,
+		ChainType: wallet_sdk.MainCoinETH,
 		Ip:        "http://192.168.10.173:8545",
 		ChainId:   "11155111",
 	}
@@ -120,7 +124,7 @@ func test1Func() {
 
 func test2Func() {
 	// 导入钱包操作
-	res := wallet_sdk.ImportAddressByPrikey(priKey, "ETH")
+	res := wallet_sdk.ImportAddressByPrikey(priKey, "TRON")
 	fmt.Printf("res: %+v\n", res)
 	fmt.Printf("res Data: %+v\n", res.Data)
 }
@@ -150,7 +154,8 @@ func test3Func() {
 
 	// 签名并广播交易
 	signData := res5.Data
-	res7 := wallet_sdk.SignAndSendTransferInfo(chainName, priKey, string(signData))
+	res7 := wallet_sdk.SignTransferInfo(chainName, priKey, string(signData))
+	// res7 := wallet_sdk.SignAndSendTransferInfo(chainName, priKey, string(signData))
 	fmt.Printf("res: %+v\n", res7)
 }
 
@@ -158,11 +163,10 @@ func test4Func() {
 	// 查询主币余额
 	res2 := wallet_sdk.GetBalanceByAddress(chainName, addr)
 	fmt.Printf("res: %+v\n", res2)
-	// // 查询交易详情
-	// res4 := wallet_sdk.GetTransaction(chainName, txHash)
-	// fmt.Printf("res: %+v\n", res4)
-	// fmt.Printf("res Data: %+v\n", res4.Data)
-	// fmt.Printf("res Data txInfo: %+v\n", res4.Data.TxInfo)
+	// // 查询UTXO信息
+	// addr = "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux"
+	// res2 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
+	// fmt.Printf("res: %+v\n", res2)
 
 	// 查询节点gas price
 	gasPriceData := wallet_sdk.GetGasPrice(chainName)
@@ -178,7 +182,8 @@ func test4Func() {
 
 	// 签名并广播交易
 	signData := res5.Data
-	res7 := wallet_sdk.SignAndSendTransferInfo(chainName, priKey, string(signData))
+	res7 := wallet_sdk.SignTransferInfo(chainName, priKey, string(signData))
+	// res7 := wallet_sdk.SignAndSendTransferInfo(chainName, priKey, string(signData))
 	fmt.Printf("res: %+v\n", res7)
 }
 
@@ -203,15 +208,6 @@ func test5Func() {
 }
 
 func test6Func() {
-	// 私钥查询地址
-	wallet_sdk.GetPrikeyAndPubkey(chainName, priKey, priKeyHex)
-	// // 查询UTXO信息
-	// addr = "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux"
-	// res2 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
-	// fmt.Printf("res: %+v\n", res2)
-}
-
-func test7Func() {
 	// 多地址签名出账
 	// 查询节点gas price
 	gasPriceData := wallet_sdk.GetGasPrice(chainName)

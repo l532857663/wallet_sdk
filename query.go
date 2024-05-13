@@ -114,11 +114,11 @@ func GetGasPrice(chainName string) *TransactionGasPriceResp {
 	var length int32
 	var baseDecimal decimal.Decimal
 	zero := decimal.NewFromInt(0)
-	switch nodeInfo.ChainType {
-	case ChainRelationForBTC:
+	switch ChainRelationMap[nodeInfo.ChainType] {
+	case MainCoinBTC:
 		length = client.SatoshiLength
 		baseDecimal = client.BtcBaseDecimal
-	case ChainRelationForETH:
+	case MainCoinETH:
 		length = client.GweiLength
 		baseDecimal = client.EthBaseDecimal
 	default:

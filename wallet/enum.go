@@ -26,10 +26,11 @@ const (
 	ETH        = ZeroQuote + 60
 	ETC        = ZeroQuote + 61
 	BCH        = ZeroQuote + 145
-	QTUM       = ZeroQuote + 2301
 	TRX        = ZeroQuote + 195
-	BNB        = ZeroQuote + 714
 	FIL        = ZeroQuote + 461
+	SOL        = ZeroQuote + 501
+	BNB        = ZeroQuote + 714
+	QTUM       = ZeroQuote + 2301
 
 	// btc token
 	USDT = BTCToken + 1
@@ -52,4 +53,11 @@ var coinTypes = map[uint32]uint32{
 	TRX:  TRX,
 	BNB:  BNB,
 	FIL:  FIL,
+}
+
+var BtcPurposeList = []uint32{
+	BTC + 44, // 1开头 legacy
+	BTC + 49, // 3开头 segwit_nested(P2SH)
+	BTC + 84, // bc1q开头 segwit_native(P2WPKH)
+	BTC + 86, // bc1p开头 taproot(P2TR)
 }

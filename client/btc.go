@@ -27,6 +27,7 @@ type BtcClient struct {
 	Params        *chaincfg.Params
 	Node          *Node
 	PsbtUpdater   *psbt.Updater
+	Placeholder   string
 }
 
 // BTC节点
@@ -65,8 +66,10 @@ func NewBtcClient(conf *Node) (*BtcClient, error) {
 	switch strings.ToUpper(conf.Net) {
 	case BtcNodeNetMain:
 		node.Params = &chaincfg.MainNetParams
+		node.Placeholder = "bc1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qm2vsxf"
 	case BtcNodeNetTestNet3:
 		node.Params = &chaincfg.TestNet3Params
+		node.Placeholder = "tb1pg0uc7ujx6rplw4wj73etg505jh49k63s7wc3kyngf73ze7ffue4skru6ld"
 	case BtcNodeNetRegTest:
 		node.Params = &chaincfg.RegressionNetParams
 	default:
@@ -310,8 +313,8 @@ func (c *BtcClient) genBtcTransaction(unSpendUTXOList []*UnspendUTXOList, toAddr
 	return retApiTx, nil
 }
 
-// SignAndSendTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error)
-func (c *BtcClient) SignAndSendTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error) {
+// SignTransferToRaw(txObj, hexPrivateKey string) (string, error)
+func (c *BtcClient) SignTransferToRaw(txObj, hexPrivateKey string) (string, error) {
 	txInfo := &BtcTransferInfo{}
 	err := json.Unmarshal([]byte(txObj), txInfo)
 	if err != nil {
@@ -319,20 +322,6 @@ func (c *BtcClient) SignAndSendTransfer(txObj, hexPrivateKey string, chainId *bi
 	}
 	apiTx := txInfo.ApiTx
 	fmt.Printf("wch----- apiTx: %+v\n", apiTx)
-	// 旧的流程
-	// // 签名
-	// for idx, rti := range txInfo.UTXOList {
-	// 	prevOutScript, err := hex.DecodeString(rti.ScriptPubKey)
-	// 	if err != nil {
-	// 		fmt.Printf("invalid script key error: %+v\n", err)
-	// 		return "", err
-	// 	}
-	// 	_, err = c.sign(apiTx, hexPrivateKey, idx, prevOutScript)
-	// 	if err != nil {
-	// 		fmt.Printf("Sign err: %+v\n", err)
-	// 		return "", err
-	// 	}
-	// }
 	// 解析私钥
 	wif, err := btcutil.DecodeWIF(hexPrivateKey)
 	if err != nil {
@@ -360,14 +349,12 @@ func (c *BtcClient) SignAndSendTransfer(txObj, hexPrivateKey string, chainId *bi
 		return "", err
 	}
 
-	raw, _ := getTxHex(apiTx)
-	fmt.Printf("apiTx txHash: %s, info: %s\n", apiTx.TxHash(), raw)
-
-	txHash, err := c.Client.SendRawTransaction(apiTx, false)
-	if nil != err {
-		return "", fmt.Errorf("Broadcast SendRawTransaction fatal, " + err.Error())
+	raw, err := getTxHex(apiTx)
+	if err != nil {
+		return "", err
 	}
-	return txHash.String(), nil
+	fmt.Printf("apiTx txHash: %s, info: %s\n", apiTx.TxHash(), raw)
+	return raw, nil
 }
 
 func Sign(tx *wire.MsgTx, privateKeys []*btcec.PrivateKey, prevOutFetcher *txscript.MultiPrevOutFetcher) error {

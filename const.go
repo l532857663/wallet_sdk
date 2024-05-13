@@ -21,6 +21,7 @@ const (
 	ContractSymbol   = "symbol"
 
 	// ETH系网络
+	ETH_Mainnet     = "eth_main"
 	ETH_Rinkeby     = "rinkeby"
 	ETH_Sepolia     = "sepolia"
 	HT_Testnet      = "ht_test"
@@ -29,22 +30,17 @@ const (
 	// TRON系网络
 	TRX_Nile = "trx_nile"
 	// BTC系网络
-	BTC_Testnet = "btc_test"
 	BTC_Mainnet = "btc_main"
+	BTC_Testnet = "btc_test"
 	// SOLANA系网络
 
 	// chain Symbol
-	MainCoinBTC    = "BTC"
-	MainCoinEth    = "ETH"
-	MainCoinBSC    = "BSC"
-	MainCoinTRON   = "TRX"
-	MainCoinSOLANA = "SOL"
-
-	// chain Type
-	ChainRelationForBTC  = "BTC"
-	ChainRelationForETH  = "ETH"
-	ChainRelationForTRON = "TRON"
-	ChainRelationForSOL  = "SOL"
+	MainCoinBTC     = "BTC"
+	MainCoinETH     = "ETH"
+	MainCoinBSC     = "BSC"
+	MainCoinPolygon = "MATIC"
+	MainCoinTRON    = "TRX"
+	MainCoinSOLANA  = "SOL"
 )
 
 var (
@@ -66,52 +62,61 @@ var (
 		ETH_Rinkeby, ETH_Sepolia,
 		BTC_Mainnet, BTC_Testnet,
 	}
+
+	// chain Type
+	ChainRelationMap = map[string]string{
+		MainCoinBTC:     MainCoinBTC,
+		MainCoinETH:     MainCoinETH,
+		MainCoinBSC:     MainCoinETH,
+		MainCoinPolygon: MainCoinETH,
+		MainCoinTRON:    MainCoinTRON,
+	}
 )
 
 var (
 	// ETH 节点信息配置
 	ETHRinkeby = client.Node{
-		ChainType: ChainRelationForETH,
-		Ip:        "192.168.10.173",
+		ChainType: MainCoinETH,
+		Ip:        "eth-node.hkva-inc.com",
 		Port:      8545,
 		ChainId:   "4",
 	}
 
 	ETHSepolia = client.Node{
-		ChainType: ChainRelationForETH,
-		Ip:        "192.168.10.173",
+		ChainType: MainCoinETH,
+		Ip:        "eth-node.hkva-inc.com",
 		Port:      8545,
 		ChainId:   "11155111",
 	}
 
 	HTTestnet = client.Node{
-		ChainType: ChainRelationForETH,
+		ChainType: MainCoinETH,
 		Ip:        "https://http-testnet.hecochain.com",
 		ChainId:   "256",
 	}
 
 	BSCTestnet = client.Node{
-		ChainType: ChainRelationForETH,
+		ChainType: MainCoinETH,
 		Ip:        "https://data-seed-prebsc-1-s1.binance.org:8545/",
 		ChainId:   "97",
 	}
 
 	POLYGONTestnet = client.Node{
-		ChainType: ChainRelationForETH,
+		ChainType: MainCoinETH,
 		Ip:        "https://rpc-mumbai.matic.today",
 		ChainId:   "80001",
 	}
 
 	TRXTestnet = client.Node{
-		ChainType: ChainRelationForTRON,
+		ChainType: MainCoinTRON,
 		Ip:        "grpc.nile.trongrid.io",
 		Port:      50051,
 		ChainId:   "5",
 	}
 
 	BTCTestnet = client.Node{
-		ChainType: ChainRelationForBTC,
-		Ip:        "192.168.13.167",
+		ChainType: MainCoinBTC,
+		Ip:        "btc-node.hkva-inc.com",
 		Port:      18443,
 		User:      "btc",
 		Password:  "btc2021",
@@ -120,7 +125,7 @@ var (
 	}
 
 	BTCMainnet = client.Node{
-		ChainType: ChainRelationForBTC,
+		ChainType: MainCoinBTC,
 		Ip:        "https://btc.getblock.io/09114f78-4075-46fa-a11f-d1678739f988/mainnet/",
 		Port:      0,
 		User:      "btc",

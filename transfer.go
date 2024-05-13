@@ -140,7 +140,7 @@ func BuildContractInfo(chainName, contract, abiContent, gasPrice, nonce, params 
  */
 func SignAndSendTransferInfo(chainName, priKey, apiTx string) *CommonResp {
 	res := &CommonResp{}
-	funcName := "SignTransferInfo"
+	funcName := "SignAndSendTransferInfo"
 
 	// 链接节点
 	cli, err := NewNodeService(chainName)
@@ -152,14 +152,19 @@ func SignAndSendTransferInfo(chainName, priKey, apiTx string) *CommonResp {
 		return res
 	}
 
-	chainId, _ := cli.ChainID()
-
-	var txHash string
-	// 签名并广播交易
-	txHash, err = cli.SignAndSendTransfer(apiTx, priKey, chainId, 0)
+	// 签名交易
+	signTx, err := cli.SignTransferToRaw(apiTx, priKey)
 	if err != nil {
 		resp := ResFailed
 		resp.Message = fmt.Sprintf("[%s] sign transfer error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+	// 广播交易
+	txHash, err := cli.SendRawTransaction(signTx)
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] Broadcast SendRawTransaction fatal: %+v", funcName, err)
 		res.Status = resp
 		return res
 	}
@@ -246,43 +251,39 @@ func BuildPSBTransferInfo(chainName, priKey, gasPrice string) *CommonResp {
 	fmt.Printf("test gasPrice: %+v\n", gasPrice)
 
 	// 输入输出
-	Ins := []client.Input{
-		client.Input{
-			TxId:       "f54e6280170f929fcf10630d2766125b9422e69855f2b17e6edae218e874413f",
-			VOut:       0,
-			Address:    "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux",
-			PrivateKey: priKey,
-		},
+	In := &client.Input{
+		TxId:       "f54e6280170f929fcf10630d2766125b9422e69855f2b17e6edae218e874413f",
+		VOut:       0,
+		Address:    "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux",
+		PrivateKey: priKey,
 	}
-	Outs := []client.Output{
-		client.Output{
-			Address: "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux",
-			Amount:  1000,
-		},
+	Out := &client.Output{
+		Address: "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux",
+		Amount:  1000,
 	}
 
 	// 创建交易结构
-	TxInfo, err := cli.BuildPSBTransfer(Ins, Outs)
+	signData, err := cli.GenerateSignedListingPSBTBase64(In, Out)
 	if err != nil {
 		resp := ResFailed
 		resp.Message = fmt.Sprintf("[%s] build transfer info error: %+v", funcName, err)
 		res.Status = resp
 		return res
 	}
-	fmt.Printf("test Tx info: %+v\n", TxInfo)
+	fmt.Printf("test Tx info: %+v\n", signData)
 
-	// 字符串
-	signData, err := json.Marshal(TxInfo)
-	if err != nil {
-		resp := ResFailed
-		resp.Message = fmt.Sprintf("[%s] json.Marshal transfer info error: %+v", funcName, err)
-		res.Status = resp
-		return res
-	}
+	// // 字符串
+	// signData, err := json.Marshal(TxInfo)
+	// if err != nil {
+	// 	resp := ResFailed
+	// 	resp.Message = fmt.Sprintf("[%s] json.Marshal transfer info error: %+v", funcName, err)
+	// 	res.Status = resp
+	// 	return res
+	// }
 
 	// 返回结果
 	res.Status = ResSuccess
-	res.Data = string(signData)
+	res.Data = signData.(string)
 	return res
 }
 
@@ -411,5 +412,45 @@ func SignListAndSendTransferInfo(chainName string, priKeys []string, apiTx strin
 	// 返回结果
 	res.Status = ResSuccess
 	res.Data = txHash
+	return res
+}
+
+/**
+ * 签名数据
+ *
+ * Params (chainName, priKey string, apiTx interface{})
+ * chainName:
+ *   链名称
+ * priKey:
+ *   私钥
+ * apiTx:
+ *   交易信息
+ */
+func SignTransferInfo(chainName, priKey, apiTx string) *CommonResp {
+	res := &CommonResp{}
+	funcName := "SignTransferInfo"
+
+	// 链接节点
+	cli, err := NewNodeService(chainName)
+	defer cli.Close()
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] new node client error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+
+	// 签名交易
+	signRes, err := cli.SignTransferToRaw(apiTx, priKey)
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] sign transfer error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+
+	// 返回结果
+	res.Status = ResSuccess
+	res.Data = signRes
 	return res
 }

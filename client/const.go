@@ -19,6 +19,11 @@ const (
 	BtcBase       int64 = 100000000
 	SatoshiLength int32 = 8
 	TrxBase       int64 = 1000000
+
+	BTCAddrLegacy = "Legacy" // 1开头
+	BTCAddrP2SH   = "P2SH"   // 3开头 segwit_nested
+	BTCAddrP2WPKH = "P2WPKH" // bc1q开头 segwit_native
+	BTCAddrP2TR   = "P2TR"   // bc1p开头 taproot
 )
 
 var (
@@ -26,6 +31,13 @@ var (
 	TransferEventID = []byte{0xdd, 0xf2, 0x52, 0xad, 0x1b, 0xe2, 0xc8, 0x9b, 0x69, 0xc2, 0xb0, 0x68, 0xfc, 0x37, 0x8d, 0xaa, 0x95, 0x2b, 0xa7, 0xf1, 0x63, 0xc4, 0xa1, 0x16, 0x28, 0xf5, 0x5a, 0x4d, 0xf5, 0x23, 0xb3, 0xef}
 
 	BtcBaseDecimal = decimal.NewFromInt(BtcBase)
+
+	BTCAddrList = []string{
+		BTCAddrLegacy,
+		BTCAddrP2SH,
+		BTCAddrP2WPKH,
+		BTCAddrP2TR,
+	}
 )
 
 const (
@@ -52,6 +64,9 @@ const (
 	// 即如果产生找零，这个找零被花掉的成本都大于这个找零，就不划算了
 	// 写100是因为把这个判断标准降低点，一个txin占用148字节
 	BtcMinChangeByte = 100
+
+	// 部分签名使用的
+	SellerSignatureIndex = 2
 )
 
 var (

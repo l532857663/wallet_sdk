@@ -27,11 +27,12 @@ type NodeService interface {
 	// 发送交易相关
 	BuildTransferInfo(fromAddr, toAddr, contract, amount, gasPrice, nonce string) (interface{}, error)
 	BuildContractInfo(contract, abiContent, gasPrice, nonce, params string, args ...interface{}) (interface{}, error)
-	SignAndSendTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error)
+	SignTransferToRaw(txObj, hexPrivateKey string) (string, error)
 	SendRawTransaction(hexTx string) (string, error)
 	BuildPSBTransfer(ins []client.Input, outs []client.Output) (interface{}, error)
 	BuildTransferInfoByList(fromAddr []*client.UnspendUTXOList, toAddr []*client.ToAddrDetail, gasPrice, changeAddr string) (interface{}, error)
 	SignListAndSendTransfer(txObj string, hexPrivateKeys []string) (string, error)
+	GenerateSignedListingPSBTBase64(ins *client.Input, outs *client.Output) (interface{}, error)
 
 	ChainID() (*big.Int, error)
 	GetBlockHeight() (int64, error)

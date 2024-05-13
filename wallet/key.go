@@ -3,7 +3,6 @@ package wallet
 import (
 	"crypto/ecdsa"
 	"encoding/hex"
-	"fmt"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
@@ -141,7 +140,6 @@ func (k *Key) PrivateWIF(compress bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("wif: %+v\n", wif)
 
 	return wif.String(), nil
 }
@@ -173,6 +171,13 @@ func (k *Key) AddressBTC() (string, error) {
 	}
 
 	return address.EncodeAddress(), nil
+}
+
+func (k *Key) AddressBTCLegacy() (string, error) {
+	publicKey := k.Public.SerializeCompressed()
+	pkHash := btcutil.Hash160(publicKey)
+	addr, err := btcutil.NewAddressPubKeyHash(pkHash, k.Opt.Params)
+	return addr.EncodeAddress(), err
 }
 
 // AddressP2WPKH generate public key to p2wpkh style address

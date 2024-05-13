@@ -21,8 +21,6 @@ func InitJsFunc() {
 
 	done := make(chan struct{}, 0)
 	// 查询方法
-	js.Global().Set("generateMnemonic", js.FuncOf(generateMnemonic))
-	js.Global().Set("generateAccountByMnemonic", js.FuncOf(generateAccountByMnemonic))
 	js.Global().Set("getBalance", js.FuncOf(getBalance))
 	js.Global().Set("getTokenBalance", js.FuncOf(getTokenBalance))
 	js.Global().Set("getTransferInfo", js.FuncOf(getTransferInfo))
@@ -31,9 +29,12 @@ func InitJsFunc() {
 	js.Global().Set("getNonce", js.FuncOf(getNonce))
 	js.Global().Set("getBlockHeight", js.FuncOf(getBlockHeight))
 	// 操作方法
+	js.Global().Set("generateMnemonic", js.FuncOf(generateMnemonic))
+	js.Global().Set("generateAccountByMnemonic", js.FuncOf(generateAccountByMnemonic))
 	js.Global().Set("buildTransferInfo", js.FuncOf(buildTransferInfo))
 	js.Global().Set("buildContractInfo", js.FuncOf(buildContractInfo))
 	js.Global().Set("signAndSendTransferInfo", js.FuncOf(signAndSendTransferInfo))
+	js.Global().Set("importPrivateKeyForAddress", js.FuncOf(importPrivateKeyForAddress))
 	// 通用方法
 	js.Global().Set("ethToGwei", js.FuncOf(ethToGwei))
 	js.Global().Set("gweiToEth", js.FuncOf(gweiToEth))
@@ -62,13 +63,23 @@ func generateAccountByMnemonic(this js.Value, args []js.Value) interface{} {
 	// 处理参数
 	mnemonic := args[0].String()
 	symbol := args[1].String()
-	purpose := args[2].Int()
-	var pp uint32
-	if purpose != 0 {
-		pp = uint32(purpose)
+	var ai, pp uint32
+	// 多账户创建
+	if len(args) == 3 {
+		addressIndex := args[2].Int()
+		if addressIndex != 0 {
+			ai = uint32(addressIndex)
+		}
+	}
+	// 不同协议
+	if len(args) == 4 {
+		purpose := args[3].Int()
+		if purpose != 0 {
+			pp = uint32(purpose)
+		}
 	}
 
-	res := wallet_sdk.GenerateAccountByMnemonic(mnemonic, symbol, &pp)
+	res := wallet_sdk.GenerateAccountByMnemonic(mnemonic, symbol, &ai, &pp)
 	return returnResponse(res)
 }
 
@@ -242,6 +253,47 @@ func signAndSendTransferInfo(this js.Value, args []js.Value) interface{} {
 		funcName.Invoke(returnResponse(res))
 	}()
 	return nil
+}
+
+func signTransferInfo(this js.Value, args []js.Value) interface{} {
+	// 处理参数
+	chain := args[0].String()
+	priKey := args[1].String()
+	txObj := args[2].String()
+	// 异步方法需要回调函数
+	funcName := args[3]
+
+	go func() {
+		defer recoverErr()
+		res := wallet_sdk.SignTransferInfo(chain, priKey, txObj)
+		// 使用回调函数处理结果
+		funcName.Invoke(returnResponse(res))
+	}()
+	return nil
+}
+
+func importPrivateKeyForAddress(this js.Value, args []js.Value) interface{} {
+	// 处理参数
+	mnemonic := args[0].String()
+	symbol := args[1].String()
+	var ai, pp uint32
+	// 多账户创建
+	if len(args) == 3 {
+		addressIndex := args[2].Int()
+		if addressIndex != 0 {
+			ai = uint32(addressIndex)
+		}
+	}
+	// 不同协议
+	if len(args) == 4 {
+		purpose := args[3].Int()
+		if purpose != 0 {
+			pp = uint32(purpose)
+		}
+	}
+
+	res := wallet_sdk.GenerateAccountByMnemonic(mnemonic, symbol, &ai, &pp)
+	return returnResponse(res)
 }
 
 /* ------------------  常用方法  ---------------------------------------- */

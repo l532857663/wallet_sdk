@@ -108,7 +108,7 @@ func (t *TronClient) BuildTransferInfo(fromAddr, toAddr, contract, amount, gasPr
 	return t.client.Transfer(fromAddr, toAddr, rawAmount.Int64())
 }
 
-func (t *TronClient) SignAndSendTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error) {
+func (t *TronClient) SignTransferToRaw(txObj, hexPrivateKey string) (string, error) {
 	// txInfo
 	apiTx := &api.TransactionExtention{}
 	err := json.Unmarshal([]byte(txObj), apiTx)
@@ -135,13 +135,7 @@ func (t *TronClient) SignAndSendTransfer(txObj, hexPrivateKey string, chainId *b
 	if err != nil {
 		return "", fmt.Errorf("Marshal trx rawTx error")
 	}
-
-	// 发送交易
-	txHash, err := t.SendRawTransaction(string(signTx))
-	if err != nil {
-		return "", err
-	}
-	return txHash, nil
+	return string(signTx), nil
 }
 
 // SendRawTransaction sends tx to node.
@@ -211,4 +205,9 @@ func (t *TronClient) BuildTransferInfoByList(unSpendUTXOList []*UnspendUTXOList,
 // 多个地址的签名出账
 func (t *TronClient) SignListAndSendTransfer(txObj string, hexPrivateKeys []string) (string, error) {
 	return "", fmt.Errorf("This method is not supported yet!")
+}
+
+// 构建部分签名操作
+func (t *TronClient) GenerateSignedListingPSBTBase64(ins *Input, outs *Output) (interface{}, error) {
+	return nil, fmt.Errorf("This method is not supported yet!")
 }

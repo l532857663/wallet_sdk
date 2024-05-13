@@ -40,7 +40,7 @@ func (c *btc) GetKey() *Key {
 }
 
 func (c *btc) GetAddress() (string, error) {
-	return c.key.AddressBTC()
+	return c.key.AddressBTCLegacy()
 }
 
 func (c *btc) GetPrivateKey() (string, error) {

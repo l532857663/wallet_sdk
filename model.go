@@ -2,9 +2,10 @@ package wallet_sdk
 
 // 账户信息
 type AccountInfo struct {
-	Address    string `json:"address"`
-	PrivateKey string `json:"private_kay"`
-	PublicKey  string `json:"public_key"`
+	Address     string       `json:"address"`
+	PrivateKey  string       `json:"privateKay"`
+	PublicKey   string       `json:"publicKey"`
+	BtcAddrList []BtcAddress `json:"btcList"`
 }
 
 // 合约信息
@@ -31,4 +32,11 @@ type GasPriceInfo struct {
 type ChooseUTXO struct {
 	TxHash string
 	Vout   uint32
+}
+
+// BTC地址及类型
+type BtcAddress struct {
+	Address     string `json:"address"`
+	PrivateKey  string `json:"privateKay"`
+	AddressType string `json:"addressType"`
 }

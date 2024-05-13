@@ -238,27 +238,23 @@ func genTransaction(toAddr string, amount, gasPrice *big.Int, nonce, gasLimit ui
 	return tx, nil
 }
 
-func (c *EthClient) SignAndSendTransfer(txObj, hexPrivateKey string, chainId *big.Int, idx int) (string, error) {
+func (c *EthClient) SignTransferToRaw(txObj, hexPrivateKey string) (string, error) {
 	// txInfo
 	apiTx := &types.LegacyTx{}
 	err := json.Unmarshal([]byte(txObj), apiTx)
 	if err != nil {
 		return "", err
 	}
-	// fmt.Printf("apiTx: %+v\n", apiTx)
-	// Prikey
-	fmt.Printf("prikey: %+v\n", hexPrivateKey)
 	prikey, err := crypto.HexToECDSA(hexPrivateKey)
 	if err != nil {
 		return "", err
 	}
-	//--------------------------------------------------------
-	// 数据hash
-	tx := types.NewTx(apiTx)
-	chainId = big.NewInt(1)
-	//--------------------------------------------------------
 
 	// signer
+	chainId, err := c.ChainID()
+	if err != nil {
+		return "", err
+	}
 	signer := types.NewEIP155Signer(chainId)
 
 	// 签名数据
@@ -272,18 +268,7 @@ func (c *EthClient) SignAndSendTransfer(txObj, hexPrivateKey string, chainId *bi
 	}
 	signTx := hexutil.Encode(data)
 
-	//--------------------------------------------------------
-	h := signer.Hash(tx).String()
-	fmt.Printf("wch----- signTx: %+v\n hash: %+v\n", signTx, h)
-	return "", nil
-	//--------------------------------------------------------
-
-	// 发送交易
-	txHash, err := c.SendRawTransaction(signTx)
-	if err != nil {
-		return "", err
-	}
-	return txHash, nil
+	return signTx, nil
 }
 
 // SendRawTransaction sends tx to node.
@@ -376,4 +361,9 @@ func (c *EthClient) BuildTransferInfoByList(unSpendUTXOList []*UnspendUTXOList, 
 // 多个地址的签名出账
 func (c *EthClient) SignListAndSendTransfer(txObj string, hexPrivateKeys []string) (string, error) {
 	return "", fmt.Errorf("This method is not supported yet!")
+}
+
+// 构建部分签名操作
+func (c *EthClient) GenerateSignedListingPSBTBase64(ins *Input, outs *Output) (interface{}, error) {
+	return nil, fmt.Errorf("This method is not supported yet!")
 }
