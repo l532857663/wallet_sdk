@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"wallet_sdk/client"
+
+	"github.com/shopspring/decimal"
 )
 
 /**
@@ -452,5 +454,62 @@ func SignTransferInfo(chainName, priKey, apiTx string) *CommonResp {
 	// 返回结果
 	res.Status = ResSuccess
 	res.Data = signRes
+	return res
+}
+
+func MultiToMultiTransfer(chainName string, vins []ChooseUTXO, inputs []int64, toAddrs, amounts []string, gasPrice, changeAddr string) *CommonResp {
+	res := &CommonResp{}
+	funcName := "BuildTransferInfoByBTCList"
+
+	// 链接节点
+	cli, err := NewNodeService(chainName)
+	defer cli.Close()
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] new node client error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+
+	// 最终使用UTXO
+	var useUTXOList []*client.UnspendUTXOList
+	for i, vin := range vins {
+		rawAmount := decimal.NewFromInt(inputs[i]).BigInt()
+		unUtxo := &client.UnspendUTXOList{
+			TxHash:    vin.TxHash,
+			Vout:      vin.Vout,
+			RawAmount: rawAmount,
+		}
+		useUTXOList = append(useUTXOList, unUtxo)
+	}
+
+	// to地址数据处理
+	var toAddrList []*client.ToAddrDetail
+	for i, toAddr := range toAddrs {
+		detail := client.GetToAddrDetail(toAddr, amounts[i])
+		toAddrList = append(toAddrList, detail)
+	}
+	// 创建交易结构
+	TxInfo, err := cli.BuildTransferInfoByList(useUTXOList, toAddrList, gasPrice, changeAddr)
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] build transfer info error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+	fmt.Printf("test Tx info: %+v\n", TxInfo)
+
+	// 字符串
+	signData, err := json.Marshal(TxInfo)
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] json.Marshal transfer info error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+
+	// 返回结果
+	res.Status = ResSuccess
+	res.Data = string(signData)
 	return res
 }
