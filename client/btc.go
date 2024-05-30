@@ -1,7 +1,6 @@
 package client
 
 import (
-	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -342,18 +341,18 @@ func (c *BtcClient) SignTransferToRaw(txObj, hexPrivateKey string) (string, erro
 		}
 		txOut := wire.NewTxOut(utxoInfo.Amount, pkScript)
 		prevOutFetcher.AddPrevOut(*outPoint, txOut)
+		fmt.Printf("wch----- txOut: %+v\n", txOut)
 		privateKeys = append(privateKeys, wif.PrivKey)
 	}
-
+	fmt.Printf("wch----- privateKeys: %+v\n", privateKeys)
+	// 签名
 	if err := Sign(apiTx, privateKeys, prevOutFetcher); err != nil {
 		return "", err
 	}
-
 	raw, err := getTxHex(apiTx)
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("apiTx txHash: %s, info: %s\n", apiTx.TxHash(), raw)
 	return raw, nil
 }
 
@@ -486,6 +485,41 @@ func (c *BtcClient) BuildTransferInfoByList(unSpendUTXOList []*UnspendUTXOList, 
 	return txObj, nil
 }
 
+// 多个地址的签名出账 弃用的旧版本，仅支持1，3类型地址签名
+// func (c *BtcClient) SignListAndSendTransfer(txObj string, hexPrivateKeys []string) (string, error) {
+// 	txInfo := &BtcTransferInfo{}
+// 	err := json.Unmarshal([]byte(txObj), txInfo)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	apiTx := txInfo.ApiTx
+// 	for idx, rti := range txInfo.UTXOList {
+// 		prevOutScript, err := hex.DecodeString(rti.ScriptPubKey)
+// 		if err != nil {
+// 			fmt.Printf("invalid script key error: %+v\n", err)
+// 			return "", err
+// 		}
+// 		_, err = c.sign(apiTx, hexPrivateKeys[idx], idx, prevOutScript)
+// 		if err != nil {
+// 			fmt.Printf("Sign err: %+v\n", err)
+// 			return "", err
+// 		}
+// 	}
+// 	// 签名
+// 	var buf bytes.Buffer
+// 	buf.Grow(hex.EncodedLen(apiTx.SerializeSize()))
+// 	if err := apiTx.Serialize(hex.NewEncoder(&buf)); err != nil {
+// 		return "", err
+// 	}
+// 	fmt.Printf("apiTx info: %+v\n", buf.String())
+//
+// 	txHash, err := c.Client.SendRawTransaction(apiTx, false)
+// 	if nil != err {
+// 		return "", fmt.Errorf("Broadcast SendRawTransaction fatal, " + err.Error())
+// 	}
+// 	return txHash.String(), nil
+// }
+
 // 多个地址的签名出账
 func (c *BtcClient) SignListAndSendTransfer(txObj string, hexPrivateKeys []string) (string, error) {
 	txInfo := &BtcTransferInfo{}
@@ -494,31 +528,40 @@ func (c *BtcClient) SignListAndSendTransfer(txObj string, hexPrivateKeys []strin
 		return "", err
 	}
 	apiTx := txInfo.ApiTx
-	for idx, rti := range txInfo.UTXOList {
-		prevOutScript, err := hex.DecodeString(rti.ScriptPubKey)
+	prevOutFetcher := txscript.NewMultiPrevOutFetcher(nil)
+	var privateKeys []*btcec.PrivateKey
+	for i := 0; i < len(apiTx.TxIn); i++ {
+		// 解析私钥
+		hexPrivateKey := hexPrivateKeys[i]
+		wif, err := btcutil.DecodeWIF(hexPrivateKey)
 		if err != nil {
-			fmt.Printf("invalid script key error: %+v\n", err)
+			return "", fmt.Errorf("SignTx [%s] DecodeWIF fatal, %+v", hexPrivateKey, err)
+		}
+		if !wif.IsForNet(c.Params) {
+			return "", fmt.Errorf("SignTx index[%d] IsForNet not matched", i+1)
+		}
+		// 处理input
+		input := apiTx.TxIn[i]
+		utxoInfo := txInfo.UTXOList[i]
+		outPoint := &input.PreviousOutPoint
+		pkScript, err := hex.DecodeString(utxoInfo.ScriptPubKey)
+		if err != nil {
 			return "", err
 		}
-		_, err = c.sign(apiTx, hexPrivateKeys[idx], idx, prevOutScript)
-		if err != nil {
-			fmt.Printf("Sign err: %+v\n", err)
-			return "", err
-		}
+		txOut := wire.NewTxOut(utxoInfo.Amount, pkScript)
+		prevOutFetcher.AddPrevOut(*outPoint, txOut)
+		privateKeys = append(privateKeys, wif.PrivKey)
 	}
 	// 签名
-	var buf bytes.Buffer
-	buf.Grow(hex.EncodedLen(apiTx.SerializeSize()))
-	if err := apiTx.Serialize(hex.NewEncoder(&buf)); err != nil {
+	if err := Sign(apiTx, privateKeys, prevOutFetcher); err != nil {
 		return "", err
 	}
-	fmt.Printf("apiTx info: %+v\n", buf.String())
-
-	txHash, err := c.Client.SendRawTransaction(apiTx, false)
-	if nil != err {
-		return "", fmt.Errorf("Broadcast SendRawTransaction fatal, " + err.Error())
+	raw, err := getTxHex(apiTx)
+	if err != nil {
+		return "", err
 	}
-	return txHash.String(), nil
+	fmt.Printf("apiTx txHash: %s, info: %s\n", apiTx.TxHash(), raw)
+	return raw, nil
 }
 
 // 查询使用的节点信息

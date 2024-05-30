@@ -5,6 +5,7 @@ import (
 	"strings"
 	"wallet_sdk/wallet"
 
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/shopspring/decimal"
 )
@@ -62,4 +63,8 @@ func StringTobigInt(a string) *big.Int {
 		return big.NewInt(0)
 	}
 	return value
+}
+
+func Int64ToSatoshi(amount int64) btcutil.Amount {
+	return btcutil.Amount(amount)
 }

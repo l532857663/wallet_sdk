@@ -30,8 +30,10 @@ type GasPriceInfo struct {
 
 // 选择使用的UTXO
 type ChooseUTXO struct {
-	TxHash string
-	Vout   uint32
+	TxHash       string
+	ScriptPubKey string
+	Vout         uint32
+	Amount       int64
 }
 
 // BTC地址及类型

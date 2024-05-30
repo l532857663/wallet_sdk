@@ -42,7 +42,7 @@ var (
 
 const (
 	// BtcMaxFeePerKb btc每kb最大fee
-	BtcMaxFeePerKb = float64(0.0001)
+	BtcMaxFeePerKb = float64(0.001)
 
 	// BtcMaxSigScriptByteSize spendSize is the largest number of bytes of a sigScript
 	// which spends a p2pkh output: OP_DATA_73 <sig> OP_DATA_33 <pubkey>

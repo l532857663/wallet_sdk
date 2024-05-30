@@ -14,6 +14,7 @@ import (
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	"github.com/shopspring/decimal"
 )
 
 var (
@@ -144,6 +145,7 @@ func GetAddressUTXO() *fyne.Container {
 	addressInput := widget.NewEntry()
 	// UTXO列表
 	resultContainer := container.NewVBox()
+	var useUTXOList []*client.UnspendUTXOList
 	// 请求按钮
 	query := widget.NewButton("QUERY", func() {
 		addr := addressInput.Text
@@ -153,6 +155,8 @@ func GetAddressUTXO() *fyne.Container {
 		checkSum := int64(0)
 		utxoList := res2.Data.([]*client.UnspendUTXOList)
 		resultContainer.Objects = nil
+		// 排序未花费的UTXO
+		client.DescSortUnspendUTXO(utxoList)
 		for _, unspentUTXO := range utxoList {
 			// UTXO展示内容
 			val := utils.EncodeStringByUtxoInfo(unspentUTXO.TxHash, unspentUTXO.Vout, unspentUTXO.Amount)
@@ -171,14 +175,15 @@ func GetAddressUTXO() *fyne.Container {
 			resultContainer.Add(checkbox)
 		}
 		resultContainer.Refresh()
+		useUTXOList = utxoList
 		// 侧边栏统计内容
 		leftContent := fmt.Sprintf("Number: %v\n Sum: %v", len(utxoList), sum)
 		leftLabel.SetText(leftContent)
 	})
 	send := widget.NewButton("Transaction", func() {
-		ChooseUTXOToTransfer(resultContainer)
+		ChooseUTXOToTransfer(resultContainer, useUTXOList)
 	})
-	button := container.NewHBox(query, send)
+	button := container.New(layout.NewGridLayout(2), query, send)
 	// 顶部提示
 	top := container.NewVBox(tip, addressInput)
 	// 侧边统计
@@ -186,16 +191,17 @@ func GetAddressUTXO() *fyne.Container {
 	return container.NewBorder(top, button, left, nil, resultContainer)
 }
 
-func ChooseUTXOToTransfer(utxoList *fyne.Container) {
+func ChooseUTXOToTransfer(utxoList *fyne.Container, useUTXOList []*client.UnspendUTXOList) {
 	fromInputs := container.NewVBox()
 	var fromEntry []*widget.Label
-	for _, obj := range utxoList.Objects {
+	var useUTXOIndex []int
+	for i, obj := range utxoList.Objects {
 		checkbox, ok := obj.(*widget.Check)
 		if ok && checkbox.Checked {
-			fmt.Printf("d: %+v\n", checkbox.Text)
 			entry := widget.NewLabel(checkbox.Text)
 			fromInputs.Add(entry)
 			fromEntry = append(fromEntry, entry)
+			useUTXOIndex = append(useUTXOIndex, i)
 		}
 	}
 	from := container.NewVBox(fromInputs)
@@ -210,20 +216,42 @@ func ChooseUTXOToTransfer(utxoList *fyne.Container) {
 		toEntry = append(toEntry, entry)
 	})
 	to := container.NewVBox(outButton, toInputs)
-	BuildBtu := widget.NewButton("BuildTransaction", func() {
+	/* ------------------------------- TOP ------------------------------- */
+	// 输入找零地址
+	inputC := widget.NewEntry()
+	inputC.SetPlaceHolder("Enter change address...")
+	// 输入私钥
+	inputM := widget.NewEntry()
+	inputM.SetPlaceHolder("Enter privateKey [e.g. cUAxLxQT6W...]")
+	// 输入手续费率
+	inputG := widget.NewEntry()
+	inputG.SetPlaceHolder("Enter gas price [e.g. 0.001] BTC/KB")
+	alert := binding.NewString()
+	alertBox := container.NewVBox(
+		widget.NewLabel("************* Alert **************************"),
+		widget.NewLabelWithData(alert),
+		widget.NewLabel("**********************************************"),
+	)
+	top := container.NewVBox(inputC, inputM, inputG, alertBox)
+	// 创建一个限制大小的容器
+	limitedSizeContainer := container.NewMax(
+		top,
+	)
+	limitedSizeContainer.Resize(fyne.NewSize(300, 200)) // 设置容器的大小
+	/* ------------------------------- TOP ------------------------------- */
+	signData := ""
+	BuildBtn := widget.NewButton("1.BuildTransaction", func() {
 		// from
-		var vins []wallet_sdk.ChooseUTXO
-		var inputs []int64
-		for _, in := range fromEntry {
-			txHash, vout, amount := utils.DecodeUtxoInfoByString(in.Text)
-			vins = append(vins, wallet_sdk.ChooseUTXO{
-				TxHash: txHash,
-				Vout:   vout,
-			})
-			inputs = append(inputs, amount)
+		var vins []*client.UnspendUTXOList
+		var inAmount int64
+		for _, in := range useUTXOIndex {
+			v := useUTXOList[in]
+			vins = append(vins, v)
+			inAmount += v.Amount
 		}
 		// to
 		var vouts, amounts []string
+		outAmount := decimal.Zero
 		for _, out := range toEntry {
 			toInfo := strings.Split(out.Text, ":")
 			if len(toInfo) < 2 {
@@ -231,27 +259,74 @@ func ChooseUTXOToTransfer(utxoList *fyne.Container) {
 			}
 			vouts = append(vouts, toInfo[0])
 			amounts = append(amounts, toInfo[1])
+			a, _ := utils.StringToDecimal(toInfo[1])
+			outAmount = outAmount.Add(a)
+		}
+		// 没填找零地址报错
+		if inputC.Text == "" {
+			alert.Set("Please enter the change address!")
+			return
 		}
 		// 查询节点gas price
 		gasPriceData := wallet_sdk.GetGasPrice(chainName)
 		gasPrice := gasPriceData.Data.Average
-		fmt.Printf("wch----- gasPrice: %+v\n", gasPrice)
-		// 构建交易数据
-		fmt.Printf("wch----- vins: %+v\n", vins)
-		fmt.Printf("wch----- inputs: %+v\n", inputs)
-		fmt.Printf("wch----- vouts: %+v\n", vouts)
-		fmt.Printf("wch----- amounts: %+v\n", amounts)
-		res1 := wallet_sdk.MultiToMultiTransfer(chainName, vins, inputs, vouts, amounts, gasPrice, "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux")
-		fmt.Printf("wch------ res1: %+v\n", res1)
-		fmt.Printf("wch------ res1 data: %+v\n", res1.Data)
+		if inputG.Text != "" {
+			gasPrice = inputG.Text
+		}
+		// // 构建交易数据
+		res1 := wallet_sdk.MultiToMultiTransfer(chainName, vins, vouts, amounts, gasPrice, inputC.Text)
+		signData = res1.Data
+		size := len(res1.Data) / 2
+		// 提示交易数据
+		transferInfo := fmt.Sprintf("Get BTC transferInfo\n[In amount] %v\n[Out amount]%s BTC\n[Gas price] %s BTC/vKB, size: %v\n[Flinally fee] %v/1000*%v", utils.Int64ToSatoshi(inAmount), outAmount.String(), gasPrice, size, gasPrice, size)
+		alert.Set(transferInfo)
 	})
+	SignBtn := widget.NewButton("2.SignTransaction", func() {
+		priKey := inputM.Text
+		// 没填私钥报错
+		if inputM.Text == "" {
+			alert.Set("Please enter the address private key!")
+			return
+		}
+		fmt.Printf("wch---- sign: %+v\n", signData)
+		res1 := wallet_sdk.SignTransferInfo(chainName, priKey, signData)
+		fmt.Printf("wch------ res1 data: %+v\n", res1.Data)
+		// 提示签名数据
+		if res1.Status.Code == wallet_sdk.RES_CODE_FAILED {
+			alert.Set(res1.Status.Message)
+			return
+		} else {
+			signData := ""
+			d := []byte(res1.Data)
+			for i := 0; i < len(d); i++ {
+				if i%64 == 0 {
+					signData += "\n"
+				}
+				signData += string(d[i])
+			}
+			alert.Set("Signature Successful\n" + signData)
+		}
+		signData = res1.Data
+	})
+	BroadcastBtn := widget.NewButton("3.BroadcastTransaction", func() {
+		res1 := wallet_sdk.BroadcastTransaction(chainName, signData)
+		fmt.Printf("wch------ res1 data: %+v\n", res1.Data)
+		// 提示交易HASH
+		if res1.Status.Code == wallet_sdk.RES_CODE_FAILED {
+			alert.Set(res1.Status.Message)
+			return
+		} else {
+			alert.Set(res1.Data)
+		}
+	})
+	button := container.New(layout.NewGridLayout(3), BuildBtn, SignBtn, BroadcastBtn)
 	split := container.NewHSplit(from, to)
 	split.SetOffset(0.5)
-	content := container.NewBorder(nil, BuildBtu, nil, nil, split)
+	content := container.NewBorder(limitedSizeContainer, button, nil, nil, split)
 	// 在新页面显示选定的数据
 	w := a.NewWindow("Selected Data")
 	w.SetContent(content)
-	w.Resize(fyne.NewSize(700, 500))
+	w.Resize(fyne.NewSize(1000, 850))
 	w.Show()
 }
 
@@ -311,7 +386,7 @@ func TransactionInfo() *fyne.Container {
 		if priKey.Text == "" || signData == "" {
 			str.Set("Please check what you entered!")
 		}
-		res7 := wallet_sdk.SignAndSendTransferInfo(chainName, priKey.Text, signData)
+		res7 := wallet_sdk.SignTransferInfo(chainName, priKey.Text, signData)
 		str.Set(res7.Data)
 	})
 	button := container.New(layout.NewGridLayout(2), btn1, btn2)
@@ -347,6 +422,7 @@ func MultiToMultiTransfer() *fyne.Container {
 	})
 	to := container.NewVBox(outButton, toInputs)
 	/******************************** Output *************************************/
+	// signData := ""
 	BuildBtu := widget.NewButton("BuildTransaction", func() {
 		// from
 		var vins []wallet_sdk.ChooseUTXO
@@ -378,9 +454,9 @@ func MultiToMultiTransfer() *fyne.Container {
 		fmt.Printf("wch----- inputs: %+v\n", inputs)
 		fmt.Printf("wch----- vouts: %+v\n", vouts)
 		fmt.Printf("wch----- amounts: %+v\n", amounts)
-		res1 := wallet_sdk.MultiToMultiTransfer(chainName, vins, inputs, vouts, amounts, gasPrice, "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux")
-		fmt.Printf("wch------ res1: %+v\n", res1)
-		fmt.Printf("wch------ res1 data: %+v\n", res1.Data)
+		// res1 := wallet_sdk.MultiToMultiTransfer(chainName, vins, inputs, vouts, amounts, gasPrice, "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux")
+		// fmt.Printf("wch------ res1 data: %+v\n", res1.Data)
+		// signData = res1.Data
 	})
 	split := container.NewHSplit(from, to)
 	split.SetOffset(0.5)

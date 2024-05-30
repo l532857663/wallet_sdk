@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"wallet_sdk/client"
-
-	"github.com/shopspring/decimal"
 )
 
 /**
@@ -402,11 +400,19 @@ func SignListAndSendTransferInfo(chainName string, priKeys []string, apiTx strin
 		return res
 	}
 
-	// 签名并广播交易
-	txHash, err := cli.SignListAndSendTransfer(apiTx, priKeys)
+	// 签名交易
+	signTx, err := cli.SignListAndSendTransfer(apiTx, priKeys)
 	if err != nil {
 		resp := ResFailed
 		resp.Message = fmt.Sprintf("[%s] sign transfer error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+	// 广播交易
+	txHash, err := cli.SendRawTransaction(signTx)
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] Broadcast SendRawTransaction fatal: %+v", funcName, err)
 		res.Status = resp
 		return res
 	}
@@ -420,7 +426,7 @@ func SignListAndSendTransferInfo(chainName string, priKeys []string, apiTx strin
 /**
  * 签名数据
  *
- * Params (chainName, priKey string, apiTx interface{})
+ * Params (chainName, priKey, apiTx string)
  * chainName:
  *   链名称
  * priKey:
@@ -457,7 +463,44 @@ func SignTransferInfo(chainName, priKey, apiTx string) *CommonResp {
 	return res
 }
 
-func MultiToMultiTransfer(chainName string, vins []ChooseUTXO, inputs []int64, toAddrs, amounts []string, gasPrice, changeAddr string) *CommonResp {
+/**
+ * 广播交易
+ *
+ * Params (chainName, signData string)
+ * chainName:
+ *   链名称
+ * signData:
+ *   签名后的交易数据
+ */
+func BroadcastTransaction(chainName, signData string) *CommonResp {
+	res := &CommonResp{}
+	funcName := "SignAndSendTransferInfo"
+
+	// 链接节点
+	cli, err := NewNodeService(chainName)
+	defer cli.Close()
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] new node client error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+	// 广播交易
+	txHash, err := cli.SendRawTransaction(signData)
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] Broadcast SendRawTransaction fatal: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+
+	// 返回结果
+	res.Status = ResSuccess
+	res.Data = txHash
+	return res
+}
+
+func MultiToMultiTransfer(chainName string, useUTXOList []*client.UnspendUTXOList, toAddrs, amounts []string, gasPrice, changeAddr string) *CommonResp {
 	res := &CommonResp{}
 	funcName := "BuildTransferInfoByBTCList"
 
@@ -471,17 +514,19 @@ func MultiToMultiTransfer(chainName string, vins []ChooseUTXO, inputs []int64, t
 		return res
 	}
 
-	// 最终使用UTXO
-	var useUTXOList []*client.UnspendUTXOList
-	for i, vin := range vins {
-		rawAmount := decimal.NewFromInt(inputs[i]).BigInt()
-		unUtxo := &client.UnspendUTXOList{
-			TxHash:    vin.TxHash,
-			Vout:      vin.Vout,
-			RawAmount: rawAmount,
-		}
-		useUTXOList = append(useUTXOList, unUtxo)
-	}
+	// // 最终使用UTXO
+	// var useUTXOList []*client.UnspendUTXOList
+	// for i, vin := range vins {
+	// 	rawAmount := decimal.NewFromInt(vin.Amount).BigInt()
+	// 	unUtxo := &client.UnspendUTXOList{
+	// 		TxHash:       vin.TxHash,
+	// 		ScriptPubKey: vin.ScriptPubKey,
+	// 		Vout:         vin.Vout,
+	// 		Amount:       vin.Amount,
+	// 		RawAmount:    rawAmount,
+	// 	}
+	// 	useUTXOList = append(useUTXOList, unUtxo)
+	// }
 
 	// to地址数据处理
 	var toAddrList []*client.ToAddrDetail
@@ -497,7 +542,7 @@ func MultiToMultiTransfer(chainName string, vins []ChooseUTXO, inputs []int64, t
 		res.Status = resp
 		return res
 	}
-	fmt.Printf("test Tx info: %+v\n", TxInfo)
+	// fmt.Printf("test Tx info: %+v\n", TxInfo)
 
 	// 字符串
 	signData, err := json.Marshal(TxInfo)

@@ -152,9 +152,10 @@ func test3Func() {
 	// res6 := wallet_sdk.BuildContractInfo(chainName, contract, abiContent, gasPrice, nonce, "approve", args...)
 	// fmt.Printf("res: %+v\n", res6)
 
-	// 签名并广播交易
+	// 签名交易
 	signData := res5.Data
 	res7 := wallet_sdk.SignTransferInfo(chainName, priKey, string(signData))
+	// 签名并广播交易
 	// res7 := wallet_sdk.SignAndSendTransferInfo(chainName, priKey, string(signData))
 	fmt.Printf("res: %+v\n", res7)
 }
@@ -180,9 +181,10 @@ func test4Func() {
 	res5 := wallet_sdk.BuildTransferInfoByBTC(chainName, addr, toAddr, amount, gasPrice)
 	fmt.Printf("res: %+v\n", res5)
 
-	// 签名并广播交易
+	// 签名交易
 	signData := res5.Data
 	res7 := wallet_sdk.SignTransferInfo(chainName, priKey, string(signData))
+	// 签名并广播交易
 	// res7 := wallet_sdk.SignAndSendTransferInfo(chainName, priKey, string(signData))
 	fmt.Printf("res: %+v\n", res7)
 }
