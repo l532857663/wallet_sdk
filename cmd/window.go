@@ -58,7 +58,7 @@ func GenerateWallet() *fyne.Container {
 		// TODO: 助记词显示语言
 		// langs = []string{"EN", "CN_S", "CN_T"}
 		// 网络可选列表
-		networks = []string{"BTC", "BTCTest", "ETH", "TRON"}
+		networks = []string{"BTC", "BTCTest", "BTCRegt", "ETH", "TRON"}
 	)
 	/* ------------------------------- CONTENT ------------------------------- */
 	// 展示生成的助记词
@@ -365,8 +365,8 @@ func TransactionInfo() *fyne.Container {
 
 	// 操作按钮
 	btn1 := widget.NewButton("Builder", func() {
-		// 查询主币余额
-		res2 := wallet_sdk.GetBalanceByAddress(chainName, fromAddr.Text)
+		// // 查询主币余额
+		// res2 := wallet_sdk.GetBalanceByAddress(chainName, fromAddr.Text)
 		// 查询节点gas price
 		gasPriceData := wallet_sdk.GetGasPrice(chainName)
 		gasPrice := gasPriceData.Data.Average
@@ -375,7 +375,8 @@ func TransactionInfo() *fyne.Container {
 		if res5.Status.Code == 0 {
 			signData = res5.Data
 			// 提示内容
-			alertStr := fmt.Sprintf("Balance: %+v\n gasPrice: %+v\n", res2.Data, gasPrice)
+			// alertStr := fmt.Sprintf("Balance: %+v\n gasPrice: %+v\n", res2.Data, gasPrice)
+			alertStr := fmt.Sprintf("Balance: %+v\n gasPrice: %+v\n", 0, gasPrice)
 			str.Set(alertStr)
 		} else {
 			str.Set(res5.Status.Message)

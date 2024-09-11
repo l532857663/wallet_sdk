@@ -8,7 +8,7 @@ import (
 
 func main() {
 	// 生成助记词、使用助记词生成私钥、地址、生成seed
-	// testFunc()
+	testFunc()
 	// 查询数据(自定义节点信息、余额、nonce、gas、contract、交易详情、块高等)
 	// test1Func()
 	// 导入私钥生成钱包信息
@@ -18,7 +18,7 @@ func main() {
 	// BTC的交易
 	// test4Func()
 	// 部分签名出账
-	test5Func()
+	// test5Func()
 	// 多地址签名出账
 	// test6Func()
 }
@@ -56,6 +56,7 @@ var (
 
 	// BTC
 	chainName = wallet_sdk.BTC_Testnet
+	// chainName = wallet_sdk.BTC_Testnet
 	// chainName = wallet_sdk.BTC_Mainnet
 	addr = "tb1pg0uc7ujx6rplw4wj73etg505jh49k63s7wc3kyngf73ze7ffue4skru6ld"
 	// addr   = "2NBeoUKGLyk5ZfSDtAvsfWteYQaAKdUAniF"
@@ -69,14 +70,14 @@ var (
 )
 
 func testFunc() {
-	// 生成助记词
-	res := wallet_sdk.GenerateMnemonic(length, "")
-	fmt.Printf("res: %+v\n", res)
-	mnemonic = res.Data
+	// // 生成助记词
+	// res := wallet_sdk.GenerateMnemonic(length, "")
+	// fmt.Printf("res: %+v\n", res)
+	// mnemonic = res.Data
 
 	// 使用助记词生成账户地址、私钥
 	var addressIndex uint32 = 0
-	res1 := wallet_sdk.GenerateAccountByMnemonic(mnemonic, "ETH", &addressIndex)
+	res1 := wallet_sdk.GenerateAccountByMnemonic(mnemonic, "BTCRegt", &addressIndex)
 	fmt.Printf("res: %+v\n", res1)
 	fmt.Printf("res Data: %+v\n", res1.Data)
 	// 使用助记词生成seed

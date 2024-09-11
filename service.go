@@ -87,6 +87,12 @@ func NewNodeService(chainName string) (NodeService, error) {
 			return nil, err
 		}
 		return cli, nil
+	case BTC_RegTest:
+		cli, err := client.NewBtcClient(&BTCRegtest)
+		if err != nil {
+			return nil, err
+		}
+		return cli, nil
 	}
 	cli, err := GetFreeNodeSerivce(chainName)
 	if err != nil {

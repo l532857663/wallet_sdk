@@ -32,6 +32,7 @@ const (
 	// BTC系网络
 	BTC_Mainnet = "btc_main"
 	BTC_Testnet = "btc_test"
+	BTC_RegTest = "btc_reg"
 	// SOLANA系网络
 
 	// chain Symbol
@@ -60,7 +61,7 @@ var (
 	// 网络选择器
 	ChainCombo = []string{
 		ETH_Rinkeby, ETH_Sepolia,
-		BTC_Mainnet, BTC_Testnet,
+		BTC_Mainnet, BTC_Testnet, BTC_RegTest,
 	}
 
 	// chain Type
@@ -116,7 +117,7 @@ var (
 
 	BTCTestnet = client.Node{
 		ChainType: MainCoinBTC,
-		Ip:        "btc-node.hkva-inc.com",
+		Ip:        "192.168.13.167",
 		Port:      18443,
 		User:      "btc",
 		Password:  "btc2021",
@@ -132,5 +133,15 @@ var (
 		Password:  "btc2021",
 		ChainId:   "",
 		Net:       "mainnet",
+	}
+
+	BTCRegtest = client.Node{
+		ChainType: MainCoinBTC,
+		Ip:        "192.168.13.167",
+		Port:      18332,
+		User:      "btc",
+		Password:  "btc2021",
+		ChainId:   "",
+		Net:       "regtest",
 	}
 )
