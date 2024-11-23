@@ -27,6 +27,8 @@ const (
 	HT_Testnet      = "ht_test"
 	BSC_Testnet     = "bsc_test"
 	POLYGON_Testnet = "polygon_test"
+	BASE_Mainnet    = "base_main"
+	BASE_Sepolia    = "base_sepolia"
 	// TRON系网络
 	TRX_Nile = "trx_nile"
 	// BTC系网络
@@ -60,7 +62,7 @@ var (
 
 	// 网络选择器
 	ChainCombo = []string{
-		ETH_Rinkeby, ETH_Sepolia,
+		ETH_Rinkeby, ETH_Sepolia, BASE_Sepolia,
 		BTC_Mainnet, BTC_Testnet, BTC_RegTest,
 	}
 
@@ -117,7 +119,7 @@ var (
 
 	BTCTestnet = client.Node{
 		ChainType: MainCoinBTC,
-		Ip:        "192.168.13.167",
+		Ip:        "10.20.13.200",
 		Port:      18443,
 		User:      "btc",
 		Password:  "btc2021",
@@ -137,11 +139,25 @@ var (
 
 	BTCRegtest = client.Node{
 		ChainType: MainCoinBTC,
-		Ip:        "192.168.13.167",
+		Ip:        "10.20.13.200",
 		Port:      18332,
 		User:      "btc",
 		Password:  "btc2021",
 		ChainId:   "",
 		Net:       "regtest",
+	}
+
+	BASESMainnet = client.Node{
+		ChainType: MainCoinETH,
+		Ip:        "https://mainnet.base.org",
+		Port:      0,
+		ChainId:   "8453",
+	}
+
+	BASESepolia = client.Node{
+		ChainType: MainCoinETH,
+		Ip:        "https://sepolia.base.org",
+		Port:      0,
+		ChainId:   "84532",
 	}
 )

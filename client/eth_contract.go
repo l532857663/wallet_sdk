@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strings"
@@ -16,8 +17,10 @@ func GetAbiAndArgs(abiContent, params string, args []interface{}) (abi.ABI, []in
 	if err != nil {
 		return contractAbi, nil, err
 	}
+	method, exist := contractAbi.Methods[params]
+	fmt.Printf("GetAbiAndArgs method: %+v\n, exist: %+v\n", method, exist)
 	var argsNew []interface{}
-	abiParam := contractAbi.Methods[params].Inputs
+	abiParam := method.Inputs
 	for i, v := range abiParam {
 		arg := ChangeArgType(args[i], v.Type.T)
 		_, ok := arg.(error)
@@ -28,7 +31,7 @@ func GetAbiAndArgs(abiContent, params string, args []interface{}) (abi.ABI, []in
 	}
 	// 检查参数数量是否匹配
 	if len(argsNew) != len(abiParam) {
-		err := fmt.Errorf("The args len not enough")
+		err := fmt.Errorf("the args len not enough")
 		return contractAbi, nil, err
 	}
 	return contractAbi, argsNew, nil
@@ -49,6 +52,15 @@ func ChangeArgType(arg interface{}, argType byte) interface{} {
 			return nil
 		}
 		return val
+	case abi.SliceTy:
+		var argSlice []common.Address
+		err := json.Unmarshal([]byte(argStr), &argSlice)
+		if err != nil {
+			return err
+		}
+		return argSlice
+	default:
+		fmt.Printf("ChangeArgType not case: %+v\n", argType)
 	}
 	return nil
 }

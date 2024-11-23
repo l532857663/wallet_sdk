@@ -211,3 +211,8 @@ func (t *TronClient) SignListAndSendTransfer(txObj string, hexPrivateKeys []stri
 func (t *TronClient) GenerateSignedListingPSBTBase64(ins *Input, outs *Output) (interface{}, error) {
 	return nil, fmt.Errorf("This method is not supported yet!")
 }
+
+// 构建合约调用
+func (t *TronClient) GetContractInfoByFunc(contractAddr, funcName string, args ...interface{}) (interface{}, error) {
+	return nil, fmt.Errorf("This method is not supported yet!")
+}

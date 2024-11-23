@@ -320,6 +320,34 @@ func (c *EthClient) BuildContractInfo(contract, abiContent, gasPrice, nonce, par
 	return apiTx, nil
 }
 
+// 查询合约信息
+func (c *EthClient) GetContractInfoByFunc(contractAddr, params string, args ...interface{}) (interface{}, error) {
+	var res []byte
+	// ERC20 通用ABI调用
+	if len(contractAddr) != 42 {
+		return res, fmt.Errorf("invalid contract address length %s", contractAddr)
+	}
+	fmt.Printf("test1\n")
+	// 获取合约信息，转化参数类型
+	contractAbi, argsNew, err := GetAbiAndArgs(AbiMap[contractAddr], params, args)
+	if err != nil {
+		return nil, fmt.Errorf("GetAbiAndArgs error: %+v\n", err)
+	}
+	data, err := contractAbi.Pack(params, argsNew...)
+	if err != nil {
+		return res, err
+	}
+	fmt.Printf("test3: %+v\n", data)
+	result, err := c.EvmCall(contractAddr, contractAddr, data)
+	if err != nil {
+		return res, err
+	}
+
+	fmt.Printf("byte: %+v\n", result)
+	fmt.Printf("string: %+v\n", hexutil.Encode(result))
+	return "string(res)", nil
+}
+
 // 查询使用的节点信息
 func (c *EthClient) GetNodeInfo() (*Node, error) {
 	return c.Node, nil

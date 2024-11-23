@@ -164,6 +164,7 @@ func GetBalanceByAddress(chainName, address string) *CommonResp {
 	res := &CommonResp{}
 	funcName := "GetBalanceByAddress"
 
+	fmt.Printf("wch----- test1\n")
 	// 链接节点
 	cli, err := NewNodeService(chainName)
 	defer cli.Close()
@@ -174,6 +175,7 @@ func GetBalanceByAddress(chainName, address string) *CommonResp {
 		return res
 	}
 
+	fmt.Printf("wch----- test1-1\n")
 	// 请求地址余额
 	balance, err := cli.GetBalance(address, StateLatest)
 	if err != nil {
@@ -358,5 +360,49 @@ func GetUTXOListByAddress(chainName, address string) *AddressUTXOListResp {
 	// 返回结果
 	res.Status = ResSuccess
 	res.Data = utxoList
+	return res
+}
+
+/**
+ * 查询合约信息
+ *
+ * Params (chainName, contract string)
+ * chainName:
+ *   链名称
+ * contract:
+ *   合约地址
+ */
+func GetContractInfoByFunc(chainName, contract, contractFunc string, args ...interface{}) *ContractInfoResp {
+	res := &ContractInfoResp{}
+	funcName := "GetContractInfoByFunc"
+
+	// 链接节点
+	cli, err := NewNodeService(chainName)
+	defer cli.Close()
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] new node client error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+
+	// 请求合约地址精度
+	info, err := cli.GetContractInfoByFunc(contract, contractFunc, args...)
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] get contract [%s] info by funcName error: %+v", funcName, contractFunc, err)
+		res.Status = resp
+		return res
+	}
+	fmt.Printf("wch---- info: %+v\n", info)
+
+	contractInfo := &ContractInfo{
+		Decimals: "aaa",
+		Symbol:   "test",
+	}
+
+	// 返回结果
+	res.Status = ResSuccess
+	res.Data = contractInfo
 	return res
 }

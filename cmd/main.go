@@ -3,14 +3,14 @@ package main
 import (
 	"fmt"
 	"wallet_sdk"
-	"wallet_sdk/client"
 )
 
 func main() {
 	// 生成助记词、使用助记词生成私钥、地址、生成seed
-	testFunc()
+	// testFunc()
 	// 查询数据(自定义节点信息、余额、nonce、gas、contract、交易详情、块高等)
 	// test1Func()
+	test1_1Func()
 	// 导入私钥生成钱包信息
 	// test2Func()
 	// ETH的交易
@@ -21,6 +21,8 @@ func main() {
 	// test5Func()
 	// 多地址签名出账
 	// test6Func()
+	// 合约调用操作
+	// test7Func()
 }
 
 var (
@@ -36,6 +38,7 @@ var (
 	// priKey    = "" //
 	// chainName = wallet_sdk.ETH_Sepolia
 	// chainName = wallet_sdk.BSC_Testnet
+	// chainName = wallet_sdk.BASE_Mainnet
 	// chainName = wallet_sdk.POLYGON_Testnet
 	// contract = "0x4646f6a4c16788321bb1db1f904353c44f53fe1a" // ETH USDT
 	// contract = "0x779877A7B0D9E8603169DdbD7836e478b4624789" // ETH LINK
@@ -45,7 +48,9 @@ var (
 	// contract = "0x2d7882bedcbfddce29ba99965dd3cdf7fcb10a1e" // POLYGON TST
 	// contract = "0xd6afb55bcaa7711b7e6c0ea372a9156ce2d901de" // ETH TST
 	// txHash = "0xa209c873736c117dde46418d0aa193a4c6d2207ee9fae458fe924aec0655679f" // MATIC
-	// txHash = "0x847fa04f575e5cb47a0cfc413feb43975154c0d303ba117006dbb55aaec92646"
+	//txHash   = "0x2410fbaaad6d7c5c9f040b91e3221265079cdc5abe4377f54fd5ca0de6a11849"
+	//addr     = "0x3e7094B74549a6b8c4b4923cbC10Ef35c4D787Ce"
+	contract = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" // BASE USDC
 
 	// TRX
 	// chainName = wallet_sdk.TRX_Nile
@@ -56,16 +61,18 @@ var (
 
 	// BTC
 	chainName = wallet_sdk.BTC_Testnet
-	// chainName = wallet_sdk.BTC_Testnet
+	// chainName = wallet_sdk.BTC_RegTest
 	// chainName = wallet_sdk.BTC_Mainnet
 	addr = "tb1pg0uc7ujx6rplw4wj73etg505jh49k63s7wc3kyngf73ze7ffue4skru6ld"
-	// addr   = "2NBeoUKGLyk5ZfSDtAvsfWteYQaAKdUAniF"
-	// addr   = "tb1pnkfdsmf6q4rmjtn3dunrmekxy57eq6xx7mnhthwu9z23u5hceluqvzmvul"
+	// addr = "2NBeoUKGLyk5ZfSDtAvsfWteYQaAKdUAniF"
+	// addr = "tb1pnkfdsmf6q4rmjtn3dunrmekxy57eq6xx7mnhthwu9z23u5hceluqvzmvul"
+	// addr = "bcrt1qu7avu4h84rpkcpa5htnt3rp6k246yr66kg2htu"
 	toAddr    = "tb1qluw5qatmke9tqlu5wznp8u0r05lccpzhz23f5e"
 	priKey    = ""
 	priKeyHex = ""
-	txHash    = "07b6936e51f8e7a83cd3f9fd811861224246924dd5b57052917aa87604fb2fa9"
-	// addr      = "36F7BBBLxASGaAmgPnN15qLMUTnH7CTp16"
+	// txHash = "07b6936e51f8e7a83cd3f9fd811861224246924dd5b57052917aa87604fb2fa9"
+	txHash = "e5cab396493c9bc22fd4bbd76b0aa5cb9ae2baf4fbdb72e057c2023b6eb4e94e"
+	// addr = "36F7BBBLxASGaAmgPnN15qLMUTnH7CTp16"
 	// addr = "bc1ptz34pme4qp43qv6ykp3r0tqz4scn8frzg9e53m034w9st9ncpums67r7sv"
 )
 
@@ -87,35 +94,61 @@ func testFunc() {
 }
 
 func test1Func() {
+	fmt.Printf("wch------ test\n")
 	// 自定义节点信息
-	chainName = "ethTest"
-	node := client.Node{
-		ChainType: wallet_sdk.MainCoinETH,
-		Ip:        "http://192.168.10.173:8545",
-		ChainId:   "11155111",
-	}
-	wallet_sdk.SetNodeInfo(chainName, node.ChainType, node.Ip, "", "", "", node.ChainId, "")
-	// // 查询主币余额
-	// res2 := wallet_sdk.GetBalanceByAddress(chainName, addr)
-	// fmt.Printf("res: %+v\n", res2)
-	// // // 查询代币余额
-	// // res2 := wallet_sdk.GetBalanceByAddressAndContract(chainName, addr, contract)
-	// // fmt.Printf("res: %+v\n", res2)
-	// // 查询地址nonce
-	// nonceData := wallet_sdk.GetNonce(chainName, addr, "latest")
-	// fmt.Printf("res: %+v\n", nonceData)
-	// // 查询节点gas price
-	// gasPriceData := wallet_sdk.GetGasPrice(chainName)
-	// fmt.Printf("res: %+v\n", gasPriceData.Data)
-	// // 查询合约信息
-	// res3 := wallet_sdk.GetContractInfo(chainName, contract)
+	// node := client.Node{
+	// 	ChainType: wallet_sdk.MainCoinETH,
+	// 	Ip:        "http://192.168.10.173:8545",
+	// 	ChainId:   "11155111",
+	// }
+	// wallet_sdk.SetNodeInfo(chainName, node.ChainType, node.Ip, "", "", "", node.ChainId, "")
+	// 查询主币余额
+	res2 := wallet_sdk.GetBalanceByAddress(chainName, addr)
+	fmt.Printf("res balance: %+v\n", res2.Data)
+	// 查询代币余额
+	res2_1 := wallet_sdk.GetBalanceByAddressAndContract(chainName, addr, contract)
+	fmt.Printf("res token: %+v\n", res2_1.Data)
+	// 查询地址nonce
+	nonceData := wallet_sdk.GetNonce(chainName, addr, "latest")
+	fmt.Printf("res nonce: %+v\n", nonceData.Data)
+	// 查询节点gas price
+	gasPriceData := wallet_sdk.GetGasPrice(chainName)
+	fmt.Printf("res gas: %+v\n", gasPriceData.Data)
+	// 查询合约信息
+	res3 := wallet_sdk.GetContractInfo(chainName, contract)
 	// fmt.Printf("res: %+v\n", res3)
-	// fmt.Printf("res Data: %+v\n", res3.Data)
+	fmt.Printf("res Data: %+v\n", res3.Data)
 
 	// 查询交易详情
 	res4 := wallet_sdk.GetTransaction(chainName, txHash)
-	fmt.Printf("res: %+v\n", res4)
-	fmt.Printf("res Data: %+v\n", res4.Data)
+	//fmt.Printf("res: %+v\n", res4)
+	//fmt.Printf("res Data: %+v\n", res4.Data)
+	fmt.Printf("res Data txInfo: %+v\n", res4.Data.TxInfo)
+
+	// // 查询块高
+	// res8 := wallet_sdk.GetBlockHeight(chainName)
+	// fmt.Printf("res: %+v\n", res8)
+}
+
+func test1_1Func() {
+	fmt.Printf("wch------ test\n")
+	// 自定义节点信息
+	// node := client.Node{
+	// 	ChainType: wallet_sdk.MainCoinETH,
+	// 	Ip:        "http://192.168.10.173:8545",
+	// 	ChainId:   "11155111",
+	// }
+	// wallet_sdk.SetNodeInfo(chainName, node.ChainType, node.Ip, "", "", "", node.ChainId, "")
+	// 查询主币余额
+	res2 := wallet_sdk.GetBalanceByAddress(chainName, addr)
+	fmt.Printf("res balance: %+v\n", res2.Data)
+	// 查询节点gas price
+	gasPriceData := wallet_sdk.GetGasPrice(chainName)
+	fmt.Printf("res gas: %+v\n", gasPriceData.Data)
+	// 查询交易详情
+	res4 := wallet_sdk.GetTransaction(chainName, txHash)
+	//fmt.Printf("res: %+v\n", res4)
+	//fmt.Printf("res Data: %+v\n", res4.Data)
 	fmt.Printf("res Data txInfo: %+v\n", res4.Data.TxInfo)
 
 	// // 查询块高
@@ -149,9 +182,9 @@ func test3Func() {
 	// res5 := wallet_sdk.BuildTransferInfo(chainName, addr, toAddr, amount, contract, gasPrice, nonce)
 	fmt.Printf("res: %+v\n", res5)
 
-	// // 构建合约调用
-	// res6 := wallet_sdk.BuildContractInfo(chainName, contract, abiContent, gasPrice, nonce, "approve", args...)
-	// fmt.Printf("res: %+v\n", res6)
+	//// 构建合约调用
+	//res6 := wallet_sdk.BuildContractInfo(chainName, contract, abiContent, gasPrice, nonce, "approve", args...)
+	//fmt.Printf("res: %+v\n", res6)
 
 	// 签名交易
 	signData := res5.Data
@@ -192,12 +225,12 @@ func test4Func() {
 
 // 部分签名
 func test5Func() {
-	// // 查询地址余额
-	// res2 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
-	// fmt.Printf("res: %+v\n", res2)
-	// for _, utxo := range res2.Data.([]*client.UnspendUTXOList) {
-	// 	fmt.Printf("utxo: %+v\n", utxo)
-	// }
+	//// 查询地址余额
+	//res2 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
+	//fmt.Printf("res: %+v\n", res2)
+	//for _, utxo := range res2.Data.([]*client.UnspendUTXOList) {
+	//	fmt.Printf("utxo: %+v\n", utxo)
+	//}
 	// // 查询节点gas price
 	gasPriceData := wallet_sdk.GetGasPrice(chainName)
 	fmt.Printf("res: %+v\n", gasPriceData.Data)
@@ -206,8 +239,8 @@ func test5Func() {
 
 	// 构建交易
 	// gasPrice := "0.00000486"
-	res5 := wallet_sdk.BuildPSBTransferInfo(chainName, priKey, gasPrice)
-	fmt.Printf("res: %+v\n", res5)
+	//res5 := wallet_sdk.BuildPSBTransferInfo(chainName, priKey, gasPrice)
+	//fmt.Printf("res: %+v\n", res5)
 }
 
 func test6Func() {
@@ -234,5 +267,27 @@ func test6Func() {
 	priKeys := []string{"cQSreoKBANpfNxLHD6v1crHE3rz44Q7hZPsV2XaJVQv6dA5eXGQV", "cTAroTKYviiVEqxPmTW43JEU56EFZLhLWYgcxHk8nfBovj72eXbT"}
 	signData := res5.Data
 	res7 := wallet_sdk.SignListAndSendTransferInfo(chainName, priKeys, string(signData))
+	fmt.Printf("res: %+v\n", res7)
+}
+
+func test7Func() {
+	// 链接节点
+	chainName := wallet_sdk.BSC_Testnet
+	addr = "0x39447c3040124057147512c3D1477dAc339fcf8C"
+
+	// 查询主币余额
+	res2 := wallet_sdk.GetBalanceByAddress(chainName, addr)
+	fmt.Printf("res balance: %+v\n", res2.Data)
+
+	//// 构建合约调用 BSC testnet v2 Router
+	//amount := "100"
+	//getAmountsOutPath := `["0xAFbcDd676D8BAD865B50Af6F77bD4914a15c3F70", "0xDA9dbD3c0C9e613973559f9593aB8d6cEd579CDD"]`
+	//res6 := wallet_sdk.GetContractInfoByFunc(chainName, "0xD99D1c33F9fC3444f8101754aBC46c52416550D1", "getAmountsOut", amount, getAmountsOutPath)
+	//fmt.Printf("res: %+v\n", res6)
+
+	// 构建合约调用 BSC testnet v2 Factory
+	tokenA := "0xAFbcDd676D8BAD865B50Af6F77bD4914a15c3F70"
+	tokenB := "0xDA9dbD3c0C9e613973559f9593aB8d6cEd579CDD"
+	res7 := wallet_sdk.GetContractInfoByFunc(chainName, "0x6725F303b657a9451d8BA641348b6761A6CC7a17", "getPair", tokenA, tokenB)
 	fmt.Printf("res: %+v\n", res7)
 }

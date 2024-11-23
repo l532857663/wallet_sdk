@@ -19,8 +19,6 @@ import (
 
 var (
 	a = app.New()
-	// BTC
-	chainName = wallet_sdk.BTC_Testnet
 )
 
 func main() {

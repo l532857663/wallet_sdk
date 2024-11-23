@@ -19,6 +19,7 @@ type NodeService interface {
 	// 查询合约信息
 	GetDecimals(contractAddr string) (*big.Int, error)
 	GetSymbol(contractAddr string) (string, error)
+	GetContractInfoByFunc(contractAddr, funcName string, args ...interface{}) (interface{}, error)
 
 	// 查询账户交易相关信息
 	SuggestGasPrice() *big.Int
@@ -89,6 +90,18 @@ func NewNodeService(chainName string) (NodeService, error) {
 		return cli, nil
 	case BTC_RegTest:
 		cli, err := client.NewBtcClient(&BTCRegtest)
+		if err != nil {
+			return nil, err
+		}
+		return cli, nil
+	case BASE_Mainnet:
+		cli, err := client.NewEthClient(&BASESMainnet)
+		if err != nil {
+			return nil, err
+		}
+		return cli, nil
+	case BASE_Sepolia:
+		cli, err := client.NewEthClient(&BASESepolia)
 		if err != nil {
 			return nil, err
 		}

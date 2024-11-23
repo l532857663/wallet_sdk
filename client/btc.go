@@ -71,6 +71,7 @@ func NewBtcClient(conf *Node) (*BtcClient, error) {
 		node.Placeholder = "tb1pg0uc7ujx6rplw4wj73etg505jh49k63s7wc3kyngf73ze7ffue4skru6ld"
 	case BtcNodeNetRegTest:
 		node.Params = &chaincfg.RegressionNetParams
+		return node, nil
 	default:
 		node.Params = &chaincfg.Params{}
 	}
@@ -125,7 +126,7 @@ func (c *BtcClient) SuggestGasPrice() *big.Int {
 }
 
 func (c *BtcClient) getFeePerKB(nblocks int64, btcMaxFeePerKb float64) (float64, error) {
-	feeInfo, err := c.Client.EstimateSmartFee(nblocks, &btcjson.EstimateModeConservative)
+	feeInfo, err := c.Client.EstimateSmartFee(nblocks, &btcjson.EstimateModeEconomical)
 	if err != nil {
 		return 0, fmt.Errorf("getFeePerKB fatal, " + err.Error())
 	}
@@ -183,6 +184,24 @@ func (c *BtcClient) BuildTransferInfo(fromAddr, toAddr, contract, amount, gasPri
 	return txObj, nil
 }
 
+// func (c *BtcClient) getAddressUTXO(address string) []*UnspendUTXOList {
+// 	var res []*UnspendUTXOList
+// 	addr, err := btcutil.DecodeAddress(address, c.Params)
+// 	if err != nil {
+// 		fmt.Printf("invalid recipet address: %v", err)
+// 		return nil
+// 	}
+// 	fmt.Printf("wch----- addr: %+v\n", addr)
+//
+// 	balances, err := c.Client.GetBalances()
+// 	if err != nil {
+// 		fmt.Printf("Get balance error: %v", err)
+// 	}
+// 	fmt.Printf("wch==== balances: %+v\n", balances)
+// 	return res
+// }
+
+// 使用mempool查询可用UTXO
 func (c *BtcClient) getAddressUTXO(address string) []*UnspendUTXOList {
 	var res []*UnspendUTXOList
 	// 使用外部服务
@@ -485,41 +504,6 @@ func (c *BtcClient) BuildTransferInfoByList(unSpendUTXOList []*UnspendUTXOList, 
 	return txObj, nil
 }
 
-// 多个地址的签名出账 弃用的旧版本，仅支持1，3类型地址签名
-// func (c *BtcClient) SignListAndSendTransfer(txObj string, hexPrivateKeys []string) (string, error) {
-// 	txInfo := &BtcTransferInfo{}
-// 	err := json.Unmarshal([]byte(txObj), txInfo)
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	apiTx := txInfo.ApiTx
-// 	for idx, rti := range txInfo.UTXOList {
-// 		prevOutScript, err := hex.DecodeString(rti.ScriptPubKey)
-// 		if err != nil {
-// 			fmt.Printf("invalid script key error: %+v\n", err)
-// 			return "", err
-// 		}
-// 		_, err = c.sign(apiTx, hexPrivateKeys[idx], idx, prevOutScript)
-// 		if err != nil {
-// 			fmt.Printf("Sign err: %+v\n", err)
-// 			return "", err
-// 		}
-// 	}
-// 	// 签名
-// 	var buf bytes.Buffer
-// 	buf.Grow(hex.EncodedLen(apiTx.SerializeSize()))
-// 	if err := apiTx.Serialize(hex.NewEncoder(&buf)); err != nil {
-// 		return "", err
-// 	}
-// 	fmt.Printf("apiTx info: %+v\n", buf.String())
-//
-// 	txHash, err := c.Client.SendRawTransaction(apiTx, false)
-// 	if nil != err {
-// 		return "", fmt.Errorf("Broadcast SendRawTransaction fatal, " + err.Error())
-// 	}
-// 	return txHash.String(), nil
-// }
-
 // 多个地址的签名出账
 func (c *BtcClient) SignListAndSendTransfer(txObj string, hexPrivateKeys []string) (string, error) {
 	txInfo := &BtcTransferInfo{}
@@ -631,4 +615,9 @@ func (c *BtcClient) ChainID() (*big.Int, error) {
 // 构建合约调用
 func (c *BtcClient) BuildContractInfo(contract, abiContent, gasPrice, nonce, params string, args ...interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("This method is not supported yet!")
+}
+
+// 查询合约信息
+func (c *BtcClient) GetContractInfoByFunc(contractAddr, funcName string, args ...interface{}) (interface{}, error) {
+	return "", fmt.Errorf("This method is not supported yet!")
 }
