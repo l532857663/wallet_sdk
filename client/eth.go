@@ -4,11 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
-	"strconv"
-	"time"
-	"wallet_sdk/utils"
-
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -17,6 +12,9 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
+	"math/big"
+	"strconv"
+	"time"
 )
 
 type EthClient struct {
@@ -26,6 +24,7 @@ type EthClient struct {
 }
 
 // 以太坊系节点通用
+
 func NewEthClient(conf *Node) (*EthClient, error) {
 	var url string
 	if conf.Port > 0 {
@@ -45,57 +44,8 @@ func NewEthClient(conf *Node) (*EthClient, error) {
 	return node, nil
 }
 
-// 查询地址余额
-func (c *EthClient) GetBalance(addr, state string) (*big.Int, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	account := EthAddressChange(addr)
-	defer cancel()
-	var result hexutil.Big
-	err := c.RpcClient.CallContext(ctx, &result, "eth_getBalance", account, state)
-	return (*big.Int)(&result), err
-}
-
-// 查询地址代币余额
-func (c *EthClient) GetBalanceByContract(addr, contractAddr string) (*big.Int, error) {
-	result, err := c.ContractCall(contractAddr, "balanceOf", addr, contractAddr, EthAddressChange(addr))
-	if err != nil {
-		return nil, err
-	}
-	return utils.ByteTobigInt(result), nil
-}
-
-// 查询交易信息
-func (c *EthClient) GetTransactionByHash(txHash string) (interface{}, bool, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-	return c.TransactionByHash(ctx, common.HexToHash(txHash))
-}
-
-// 查询合约精度
-func (c *EthClient) GetDecimals(contractAddr string) (*big.Int, error) {
-	result, err := c.ContractCall(contractAddr, "decimals", contractAddr, contractAddr)
-	if err != nil {
-		return nil, err
-	}
-	return utils.ByteTobigInt(result), nil
-}
-
-// 查询合约symbol
-func (c *EthClient) GetSymbol(contractAddr string) (string, error) {
-	result, err := c.ContractCall(contractAddr, "symbol", contractAddr, contractAddr)
-	if err != nil {
-		return "", err
-	}
-	// NOTE：该方法返回数据总长度为96
-	if len(result) != 96 || result[31] != 0x20 {
-		return "", err
-	}
-	res := result[64 : 64+int(result[63])]
-	// fmt.Printf("byte: %+v\n", result)
-	return string(res), nil
-}
-
 // 合约调用方法
+
 func (c *EthClient) ContractCall(contractAddr, params, from, to string, args ...interface{}) ([]byte, error) {
 	var res []byte
 	// ERC20 通用ABI调用
@@ -128,60 +78,8 @@ func (c *EthClient) EvmCall(fromAddr, toAddr string, data []byte) ([]byte, error
 	return c.Client.CallContract(ctx, msg, nil)
 }
 
-// SuggestGasPrice retrieves the currently suggested gas price to allow a timely
-// execution of a transaction.
-func (c *EthClient) SuggestGasPrice() *big.Int {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-
-	gasPrice, err := c.Client.SuggestGasPrice(ctx)
-	if err != nil {
-		return big.NewInt(0)
-	}
-
-	return gasPrice
-}
-
-// 查询地址的nonce
-func (c *EthClient) GetNonce(addr, param string) (uint64, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-	method := "eth_getTransactionCount"
-	var strNonce string
-	err := c.RpcClient.CallContext(ctx, &strNonce, method, addr, param)
-	if err != nil {
-		return 0, err
-	}
-	nonce := utils.HexTobigInt(strNonce)
-	return nonce.Uint64(), nil
-}
-
-// 查询chain_id
-func (c *EthClient) ChainID() (*big.Int, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-	id, err := c.Client.ChainID(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return id, nil
-}
-
-// 查询最新区块高度
-func (c *EthClient) GetBlockHeight() (int64, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-	method := "eth_blockNumber"
-	var strHeight string
-	err := c.RpcClient.CallContext(ctx, &strHeight, method)
-	if err != nil {
-		return 0, err
-	}
-	height := utils.HexTobigInt(strHeight)
-	return height.Int64(), nil
-}
-
 // 构建交易
+
 func (c *EthClient) BuildTransferInfo(fromAddr, toAddr, contract, amount, gasPrice, nonce string) (interface{}, error) {
 	var (
 		apiTx *types.LegacyTx
@@ -284,6 +182,7 @@ func (c *EthClient) SendRawTransaction(hexTx string) (string, error) {
 }
 
 // 构建合约调用
+
 func (c *EthClient) BuildContractInfo(contract, abiContent, gasPrice, nonce, params string, args ...interface{}) (interface{}, error) {
 	var (
 		apiTx *types.LegacyTx
@@ -301,7 +200,7 @@ func (c *EthClient) BuildContractInfo(contract, abiContent, gasPrice, nonce, par
 		return nil, paramsErr("nonce")
 	}
 	// 获取合约信息，转化参数类型
-	contractAbi, argsNew, err := GetAbiAndArgs(abiContent, params, args)
+	contractAbi, argsNew, err := GetAbiAndArgs(contract, abiContent, params, args)
 	if err != nil {
 		return nil, paramsErr("abiContent")
 	}
@@ -320,78 +219,74 @@ func (c *EthClient) BuildContractInfo(contract, abiContent, gasPrice, nonce, par
 	return apiTx, nil
 }
 
-// 查询合约信息
-func (c *EthClient) GetContractInfoByFunc(contractAddr, params string, args ...interface{}) (interface{}, error) {
-	var res []byte
-	// ERC20 通用ABI调用
-	if len(contractAddr) != 42 {
-		return res, fmt.Errorf("invalid contract address length %s", contractAddr)
-	}
-	fmt.Printf("test1\n")
-	// 获取合约信息，转化参数类型
-	contractAbi, argsNew, err := GetAbiAndArgs(AbiMap[contractAddr], params, args)
-	if err != nil {
-		return nil, fmt.Errorf("GetAbiAndArgs error: %+v\n", err)
-	}
-	data, err := contractAbi.Pack(params, argsNew...)
-	if err != nil {
-		return res, err
-	}
-	fmt.Printf("test3: %+v\n", data)
-	result, err := c.EvmCall(contractAddr, contractAddr, data)
-	if err != nil {
-		return res, err
-	}
-
-	fmt.Printf("byte: %+v\n", result)
-	fmt.Printf("string: %+v\n", hexutil.Encode(result))
-	return "string(res)", nil
-}
-
 // 查询使用的节点信息
+
 func (c *EthClient) GetNodeInfo() (*Node, error) {
 	return c.Node, nil
 }
 
-// 查询地址是否是Taproot类型
-func (c *EthClient) GetAddressIsTaproot(addr string) bool {
-	return false
-}
-
 // 关闭链接
-func (node *EthClient) Close() {
-	if node.Client != nil {
-		node.Client.Close()
+
+func (c *EthClient) Close() {
+	if c.Client != nil {
+		c.Client.Close()
 	}
-	if node.RpcClient != nil {
-		node.RpcClient.Close()
+	if c.RpcClient != nil {
+		c.RpcClient.Close()
 	}
 }
 
 /** 链暂不支持的方法
  */
 
+// 查询地址是否是Taproot类型
+
+func (c *EthClient) GetAddressIsTaproot(addr string) bool {
+	return false
+}
+
 // 构建部分签名操作
+
 func (c *EthClient) BuildPSBTransfer(ins []Input, outs []Output) (interface{}, error) {
-	return nil, fmt.Errorf("This method is not supported yet!")
+	return nil, MethodNotSupportYet
 }
 
 // 查询地址UTXO列表
+
 func (c *EthClient) GetAddressUTXO(addr, state string) (interface{}, error) {
-	return nil, fmt.Errorf("This method is not supported yet!")
+	return nil, MethodNotSupportYet
 }
 
 // 构建多对多交易
+
 func (c *EthClient) BuildTransferInfoByList(unSpendUTXOList []*UnspendUTXOList, toAddrList []*ToAddrDetail, gasPrice, changeAddr string) (interface{}, error) {
-	return nil, fmt.Errorf("This method is not supported yet!")
+	return nil, MethodNotSupportYet
 }
 
 // 多个地址的签名出账
+
 func (c *EthClient) SignListAndSendTransfer(txObj string, hexPrivateKeys []string) (string, error) {
-	return "", fmt.Errorf("This method is not supported yet!")
+	return "", MethodNotSupportYet
 }
 
 // 构建部分签名操作
+
 func (c *EthClient) GenerateSignedListingPSBTBase64(ins *Input, outs *Output) (interface{}, error) {
-	return nil, fmt.Errorf("This method is not supported yet!")
+	return nil, MethodNotSupportYet
+}
+
+func (c *EthClient) GetBlockHashByHeight(height int64) (string, error) {
+	return "", MethodNotSupportYet
+}
+
+func (c *EthClient) GetBlockInfoByHeight(height int64) (interface{}, error) {
+	return nil, MethodNotSupportYet
+}
+
+func (c *EthClient) GetBlockInfoByHash(hash string) (interface{}, error) {
+	return nil, MethodNotSupportYet
+}
+
+func (c *EthClient) GetParams() interface{} {
+	return nil
 }

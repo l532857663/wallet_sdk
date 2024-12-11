@@ -23,12 +23,12 @@ func (c *BtcClient) GenerateSignedListingPSBTBase64(in *Input, out *Output) (int
 	prevOut := wire.NewOutPoint(txHash, in.VOut)
 	inputs := []*wire.OutPoint{{Index: 0}, {Index: 1}, prevOut}
 
-	pkScript, err := NewPubkeyHash(out.Address, network)
+	pkScript, err := NewPubKeyHash(out.Address, network)
 	if err != nil {
 		return "", err
 	}
 	// placeholder
-	dummyPkScript, err := NewPubkeyHash(c.Placeholder, network)
+	dummyPkScript, err := NewPubKeyHash(c.Placeholder, network)
 	if err != nil {
 		return "", err
 	}
@@ -55,7 +55,7 @@ func (c *BtcClient) GenerateSignedListingPSBTBase64(in *Input, out *Output) (int
 		return "", err
 	}
 
-	prevPkScript, err := NewPubkeyHash(in.Address, network)
+	prevPkScript, err := NewPubKeyHash(in.Address, network)
 	if err != nil {
 		return "", err
 	}
@@ -92,7 +92,7 @@ func (c *BtcClient) BuildPSBTransfer(ins []Input, outs []Output) (interface{}, e
 
 	var outputs []*wire.TxOut
 	for _, out := range outs {
-		pkScript, err := NewPubkeyHash(out.Address, network)
+		pkScript, err := NewPubKeyHash(out.Address, network)
 		if err != nil {
 			return "", err
 		}
@@ -114,7 +114,7 @@ func (c *BtcClient) BuildPSBTransfer(ins []Input, outs []Output) (interface{}, e
 		if err != nil {
 			return "", err
 		}
-		prevPkScript, err := NewPubkeyHash(in.Address, network)
+		prevPkScript, err := NewPubKeyHash(in.Address, network)
 		if err != nil {
 			return "", err
 		}
@@ -184,7 +184,7 @@ func signInput(updater *psbt.Updater, i int, in *Input, prevOutFetcher *txscript
 	}
 	privKey := wif.PrivKey
 
-	prevPkScript, err := NewPubkeyHash(in.Address, network)
+	prevPkScript, err := NewPubKeyHash(in.Address, network)
 	if err != nil {
 		return err
 	}

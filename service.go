@@ -35,11 +35,16 @@ type NodeService interface {
 	SignListAndSendTransfer(txObj string, hexPrivateKeys []string) (string, error)
 	GenerateSignedListingPSBTBase64(ins *client.Input, outs *client.Output) (interface{}, error)
 
-	ChainID() (*big.Int, error)
+	// 查询区块信息
 	GetBlockHeight() (int64, error)
+	GetBlockHashByHeight(height int64) (string, error)
+	GetBlockInfoByHeight(height int64) (interface{}, error)
+	GetBlockInfoByHash(hash string) (interface{}, error)
 
 	// 查询节点信息
 	GetNodeInfo() (*client.Node, error)
+	ChainID() (*big.Int, error)
+	GetParams() interface{}
 	Close()
 }
 
@@ -107,7 +112,7 @@ func NewNodeService(chainName string) (NodeService, error) {
 		}
 		return cli, nil
 	}
-	cli, err := GetFreeNodeSerivce(chainName)
+	cli, err := GetFreeNodeService(chainName)
 	if err != nil {
 		return nil, err
 	}
@@ -132,10 +137,10 @@ func SetNodeInfo(name, chainType, ip, portStr, user, password, chainId, net stri
 	client.FreeNodeMap[name] = node
 }
 
-func GetFreeNodeSerivce(name string) (NodeService, error) {
+func GetFreeNodeService(name string) (NodeService, error) {
 	node, ok := client.FreeNodeMap[name]
 	if !ok {
-		return nil, fmt.Errorf("Not get node[%s] info!", name)
+		return nil, fmt.Errorf("not get node[%s] info", name)
 	}
 	chainType := strings.ToUpper(node.ChainType)
 	switch chainType {
@@ -158,5 +163,5 @@ func GetFreeNodeSerivce(name string) (NodeService, error) {
 		}
 		return cli, nil
 	}
-	return nil, fmt.Errorf("The chain[%s] is not support!", node.ChainType)
+	return nil, fmt.Errorf("the chain[%s] is not support", node.ChainType)
 }

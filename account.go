@@ -82,7 +82,7 @@ func GenerateAccountByMnemonic(mnemonic, symbol string, addressIndex *uint32) *A
 	}
 	if symbol == "BTCTest" {
 		master.Opt.Params = &wallet.BTCTestnetParams
-	} else if symbol == "BTCRegt" {
+	} else if symbol == "BTCRegT" {
 		master.Opt.Params = &wallet.BTCRegtestParams
 	}
 	account, err := master.GetWallet(wallet.CoinType(master.Opt.CoinType), wallet.Params(master.Opt.Params), wallet.AddressIndex(master.Opt.AddressIndex))

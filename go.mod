@@ -1,6 +1,8 @@
 module wallet_sdk
 
-go 1.20
+go 1.21
+
+toolchain go1.23.1
 
 require (
 	fyne.io/fyne/v2 v2.4.5
@@ -11,9 +13,11 @@ require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0
 	github.com/ethereum/go-ethereum v1.13.9
 	github.com/fbsobreira/gotron-sdk v0.0.0-00010101000000-000000000000
+	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/minchenzz/brc20tool v0.0.0-20230430042556-a383f1b5d34a
 	github.com/shopspring/decimal v1.3.1
 	github.com/tyler-smith/go-bip39 v1.1.0
+	go.uber.org/zap v1.21.0
 	google.golang.org/grpc v1.60.1
 )
 
@@ -50,7 +54,9 @@ require (
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/holiman/uint256 v1.2.4 // indirect
+	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
+	github.com/lestrrat-go/strftime v1.1.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
@@ -69,7 +75,6 @@ require (
 	github.com/yuin/goldmark v1.5.5 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
 	golang.org/x/image v0.11.0 // indirect

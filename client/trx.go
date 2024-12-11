@@ -168,14 +168,14 @@ func (t *TronClient) GetNodeInfo() (*Node, error) {
 }
 
 // 查询地址是否是Taproot类型
-func (c *TronClient) GetAddressIsTaproot(addr string) bool {
+func (t *TronClient) GetAddressIsTaproot(addr string) bool {
 	return false
 }
 
 // 关闭链接
-func (node *TronClient) Close() {
-	if node.client != nil {
-		node.client.Stop()
+func (t *TronClient) Close() {
+	if t.client != nil {
+		t.client.Stop()
 	}
 }
 
@@ -184,35 +184,51 @@ func (node *TronClient) Close() {
 
 // 构建合约调用
 func (t *TronClient) BuildContractInfo(contract, abiContent, gasPrice, nonce, params string, args ...interface{}) (interface{}, error) {
-	return nil, fmt.Errorf("This method is not supported yet!")
+	return nil, MethodNotSupportYet
 }
 
 // 构建部分签名操作
 func (t *TronClient) BuildPSBTransfer(ins []Input, outs []Output) (interface{}, error) {
-	return nil, fmt.Errorf("This method is not supported yet!")
+	return nil, MethodNotSupportYet
 }
 
 // 查询地址UTXO列表
 func (t *TronClient) GetAddressUTXO(addr, state string) (interface{}, error) {
-	return nil, fmt.Errorf("This method is not supported yet!")
+	return nil, MethodNotSupportYet
 }
 
 // 构建多对多交易
 func (t *TronClient) BuildTransferInfoByList(unSpendUTXOList []*UnspendUTXOList, toAddrList []*ToAddrDetail, gasPrice, changeAddr string) (interface{}, error) {
-	return nil, fmt.Errorf("This method is not supported yet!")
+	return nil, MethodNotSupportYet
 }
 
 // 多个地址的签名出账
 func (t *TronClient) SignListAndSendTransfer(txObj string, hexPrivateKeys []string) (string, error) {
-	return "", fmt.Errorf("This method is not supported yet!")
+	return "", MethodNotSupportYet
 }
 
 // 构建部分签名操作
 func (t *TronClient) GenerateSignedListingPSBTBase64(ins *Input, outs *Output) (interface{}, error) {
-	return nil, fmt.Errorf("This method is not supported yet!")
+	return nil, MethodNotSupportYet
 }
 
 // 构建合约调用
 func (t *TronClient) GetContractInfoByFunc(contractAddr, funcName string, args ...interface{}) (interface{}, error) {
-	return nil, fmt.Errorf("This method is not supported yet!")
+	return nil, MethodNotSupportYet
+}
+
+func (t *TronClient) GetBlockHashByHeight(height int64) (string, error) {
+	return "", MethodNotSupportYet
+}
+
+func (t *TronClient) GetBlockInfoByHeight(height int64) (interface{}, error) {
+	return nil, MethodNotSupportYet
+}
+
+func (t *TronClient) GetBlockInfoByHash(hash string) (interface{}, error) {
+	return nil, MethodNotSupportYet
+}
+
+func (t *TronClient) GetParams() interface{} {
+	return nil
 }

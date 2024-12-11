@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"fyne.io/fyne/v2"
 	"strconv"
 	"strings"
 	"wallet_sdk"
 	"wallet_sdk/client"
 	"wallet_sdk/utils"
 
-	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
@@ -56,7 +56,7 @@ func GenerateWallet() *fyne.Container {
 		// TODO: 助记词显示语言
 		// langs = []string{"EN", "CN_S", "CN_T"}
 		// 网络可选列表
-		networks = []string{"BTC", "BTCTest", "BTCRegt", "ETH", "TRON"}
+		networks = []string{"BTC", "BTCTest", "BTCRegT", "ETH", "TRON"}
 	)
 	/* ------------------------------- CONTENT ------------------------------- */
 	// 展示生成的助记词

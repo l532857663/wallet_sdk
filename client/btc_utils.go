@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"math/big"
 
 	"github.com/btcsuite/btcd/btcutil"
@@ -13,6 +14,7 @@ import (
 )
 
 // BTC的交易结构体
+
 type BtcTransferInfo struct {
 	ApiTx    *wire.MsgTx
 	UTXOList []*UnspendUTXOList
@@ -29,7 +31,8 @@ func GetToAddrDetail(toAddr, amount string) *ToAddrDetail {
 }
 
 // newPubkeyHash 生成公钥哈希脚本
-func NewPubkeyHash(encodedAddr string, net *chaincfg.Params) ([]byte, error) {
+
+func NewPubKeyHash(encodedAddr string, net *chaincfg.Params) ([]byte, error) {
 	// Decode the recipent address.
 	addr, err := btcutil.DecodeAddress(encodedAddr, net)
 	if err != nil {
@@ -90,4 +93,25 @@ func getTxHex(tx *wire.MsgTx) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(buf.Bytes()), nil
+}
+
+func GetAddressByPrivateKey(priKey *btcec.PrivateKey, params interface{}) (*btcutil.AddressPubKeyHash, error) {
+	pubKey := priKey.PubKey()
+	pkHash := btcutil.Hash160(pubKey.SerializeCompressed())
+	addr, err := btcutil.NewAddressPubKeyHash(pkHash, params.(*chaincfg.Params))
+	if err != nil {
+		return nil, err
+	}
+	return addr, nil
+}
+
+func GetAddressByPKScript(pkScript []byte, params interface{}) (string, error) {
+	_, addr, required, err := txscript.ExtractPkScriptAddrs(pkScript, params.(*chaincfg.Params))
+	if err != nil {
+		return "", err
+	}
+	if len(addr) == 0 || required == 0 {
+		return "", fmt.Errorf("Not have address")
+	}
+	return addr[0].EncodeAddress(), nil
 }

@@ -1,0 +1,19 @@
+service_conf:
+  service_addr: ':4396'
+  service_fee_address: 'tb1pg0uc7ujx6rplw4wj73etg505jh49k63s7wc3kyngf73ze7ffue4skru6ld'
+  service_fee: 1024
+  service_prometheus_addr: ''
+zap:
+  level: 'info'
+  format: 'console'
+  prefix: ''
+  director: 'log'
+  link-name: 'log/latest_log'
+  show-line: true
+  encode-level: 'LowercaseColorLevelEncoder'
+  stacktrace-key: 'stacktrace'
+  log-in-console: true
+elastic_conf:
+  host: 'https://localhost:9200'
+  username: 'elastic'
+  password: '0wypne1=4NdK1dYTrV5+'

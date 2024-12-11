@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/btcsuite/btcd/txscript"
@@ -38,6 +39,8 @@ var (
 		BTCAddrP2WPKH,
 		BTCAddrP2TR,
 	}
+
+	MethodNotSupportYet = fmt.Errorf("this method is not supported yet")
 )
 
 const (

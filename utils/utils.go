@@ -12,7 +12,7 @@ import (
 
 func Symbol2CoinType(symbol string) uint32 {
 	switch symbol {
-	case "BTC", "BTCTest", "BTCRegt":
+	case "BTC", "BTCTest", "BTCRegT":
 		return wallet.BTC
 	case "ETH":
 		return wallet.ETH

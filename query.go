@@ -2,6 +2,7 @@ package wallet_sdk
 
 import (
 	"fmt"
+	"github.com/btcsuite/btcd/wire"
 	"strconv"
 	"wallet_sdk/client"
 
@@ -404,5 +405,37 @@ func GetContractInfoByFunc(chainName, contract, contractFunc string, args ...int
 	// 返回结果
 	res.Status = ResSuccess
 	res.Data = contractInfo
+	return res
+}
+
+func GetBlockInfoByHeight(chainName string, height int64) *CommonResp {
+	res := &CommonResp{}
+	funcName := "GetBlockInfoByHeight"
+
+	// 链接节点
+	cli, err := NewNodeService(chainName)
+	defer cli.Close()
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] new node client error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+	// 请求合约地址余额
+	info, err := cli.GetBlockInfoByHeight(height)
+	if err != nil {
+		resp := ResFailed
+		resp.Message = fmt.Sprintf("[%s] get balance error: %+v", funcName, err)
+		res.Status = resp
+		return res
+	}
+	fmt.Printf("info: %+v\n", info)
+	for _, v := range info.(*wire.MsgBlock).Transactions {
+		fmt.Printf("v: %+v\n", v)
+	}
+
+	// 返回结果
+	res.Status = ResSuccess
+	res.Data = ""
 	return res
 }

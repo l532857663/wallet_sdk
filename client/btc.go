@@ -66,9 +66,11 @@ func NewBtcClient(conf *Node) (*BtcClient, error) {
 	case BtcNodeNetMain:
 		node.Params = &chaincfg.MainNetParams
 		node.Placeholder = "bc1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qm2vsxf"
+		node.MempoolClient = mempool.NewClient(node.Params)
 	case BtcNodeNetTestNet3:
 		node.Params = &chaincfg.TestNet3Params
 		node.Placeholder = "tb1pg0uc7ujx6rplw4wj73etg505jh49k63s7wc3kyngf73ze7ffue4skru6ld"
+		node.MempoolClient = mempool.NewClient(node.Params)
 	case BtcNodeNetRegTest:
 		node.Params = &chaincfg.RegressionNetParams
 		return node, nil
@@ -76,23 +78,7 @@ func NewBtcClient(conf *Node) (*BtcClient, error) {
 		node.Params = &chaincfg.Params{}
 	}
 	// 初始化外部服务
-	node.MempoolClient = mempool.NewClient(node.Params)
 	return node, nil
-}
-
-// 查询地址余额
-func (c *BtcClient) GetBalance(addr, state string) (*big.Int, error) {
-	utxoList := c.getAddressUTXO(addr)
-	balance := big.NewInt(0)
-	for _, utxo := range utxoList {
-		balance.Add(balance, utxo.RawAmount)
-	}
-	return balance, nil
-}
-
-// 查询地址UTXO列表
-func (c *BtcClient) GetAddressUTXO(addr, state string) (interface{}, error) {
-	return c.getAddressUTXO(addr), nil
 }
 
 // 根据交易HASH查交易详情
@@ -137,11 +123,6 @@ func (c *BtcClient) getFeePerKB(nblocks int64, btcMaxFeePerKb float64) (float64,
 	return feePerKb, nil
 }
 
-// 查询最新区块高度
-func (c *BtcClient) GetBlockHeight() (int64, error) {
-	return c.Client.GetBlockCount()
-}
-
 // 构建交易
 func (c *BtcClient) BuildTransferInfo(fromAddr, toAddr, contract, amount, gasPrice, nonce string) (interface{}, error) {
 	// to地址数据处理
@@ -183,64 +164,6 @@ func (c *BtcClient) BuildTransferInfo(fromAddr, toAddr, contract, amount, gasPri
 	}
 	return txObj, nil
 }
-
-// func (c *BtcClient) getAddressUTXO(address string) []*UnspendUTXOList {
-// 	var res []*UnspendUTXOList
-// 	addr, err := btcutil.DecodeAddress(address, c.Params)
-// 	if err != nil {
-// 		fmt.Printf("invalid recipet address: %v", err)
-// 		return nil
-// 	}
-// 	fmt.Printf("wch----- addr: %+v\n", addr)
-//
-// 	balances, err := c.Client.GetBalances()
-// 	if err != nil {
-// 		fmt.Printf("Get balance error: %v", err)
-// 	}
-// 	fmt.Printf("wch==== balances: %+v\n", balances)
-// 	return res
-// }
-
-// 使用mempool查询可用UTXO
-func (c *BtcClient) getAddressUTXO(address string) []*UnspendUTXOList {
-	var res []*UnspendUTXOList
-	// 使用外部服务
-	addr, err := btcutil.DecodeAddress(address, c.Params)
-	if err != nil {
-		fmt.Printf("invalid recipet address: %v", err)
-		return nil
-	}
-	// 查询未花费的UTXO列表
-	unspendList, err := c.MempoolClient.ListUnspent(addr)
-	if err != nil {
-		fmt.Printf("GetListUnspent error: %+v", err)
-		return nil
-	}
-	if len(unspendList) == 0 {
-		fmt.Printf("no utxo for %v", addr)
-		return nil
-	}
-	// ScriptPubKey
-	spk, err := txscript.PayToAddrScript(addr)
-	if err != nil {
-		fmt.Printf("PayToAddrScript err: %v", err)
-		return nil
-	}
-	// 格式化
-	for _, unspend := range unspendList {
-		amount := unspend.Output.Value
-		tmp := &UnspendUTXOList{
-			TxHash:       unspend.Outpoint.Hash.String(),
-			ScriptPubKey: hex.EncodeToString(spk),
-			Vout:         unspend.Outpoint.Index,
-			Amount:       amount,
-			RawAmount:    big.NewInt(amount),
-		}
-		res = append(res, tmp)
-	}
-	return res
-}
-
 func (c *BtcClient) genBtcTransaction(unSpendUTXOList []*UnspendUTXOList, toAddrList []*ToAddrDetail, gasPrice *big.Int, changeAddr string) (*wire.MsgTx, error) {
 	retApiTx := wire.NewMsgTx(wire.TxVersion)
 	// 计算 UTXO
@@ -268,7 +191,7 @@ func (c *BtcClient) genBtcTransaction(unSpendUTXOList []*UnspendUTXOList, toAddr
 		fmt.Printf("toAddr: %+v, value: %+v\n", toAddr, satoshi)
 		outAmount += satoshi
 		// Decode the recipent address.
-		pkScript, err := NewPubkeyHash(toAddr, c.Params)
+		pkScript, err := NewPubKeyHash(toAddr, c.Params)
 		if err != nil {
 			return nil, fmt.Errorf("genBtcTransaction NewPubkeyHash fatal, " + err.Error())
 		}
@@ -290,7 +213,7 @@ func (c *BtcClient) genBtcTransaction(unSpendUTXOList []*UnspendUTXOList, toAddr
 	}
 
 	//进行找零 ScriptPubKey
-	pkScript, err := NewPubkeyHash(changeAddr, c.Params)
+	pkScript, err := NewPubKeyHash(changeAddr, c.Params)
 	if err != nil {
 		return nil, fmt.Errorf("genBtcTransaction txscript.PayToAddrScript fatal, %s, addr: %s", err.Error(), changeAddr)
 	}
@@ -553,6 +476,10 @@ func (c *BtcClient) GetNodeInfo() (*Node, error) {
 	return c.Node, nil
 }
 
+func (c *BtcClient) GetParams() interface{} {
+	return c.Params
+}
+
 // 查询地址是否是Taproot类型
 func (c *BtcClient) GetAddressIsTaproot(address string) bool {
 	addr, err := btcutil.DecodeAddress(address, c.Params)
@@ -579,9 +506,9 @@ func (c *BtcClient) GetAddressIsTaproot(address string) bool {
 }
 
 // 关闭链接
-func (node *BtcClient) Close() {
-	if node.Client != nil {
-		node.Client.Shutdown()
+func (c *BtcClient) Close() {
+	if c.Client != nil {
+		c.Client.Shutdown()
 	}
 }
 
@@ -589,35 +516,35 @@ func (node *BtcClient) Close() {
  */
 // 查询地址代币余额
 func (c *BtcClient) GetBalanceByContract(addr, contractAddr string) (*big.Int, error) {
-	return nil, fmt.Errorf("This method is not supported yet!")
+	return nil, MethodNotSupportYet
 }
 
 // 查询合约精度
 func (c *BtcClient) GetDecimals(contractAddr string) (*big.Int, error) {
-	return nil, fmt.Errorf("This method is not supported yet!")
+	return nil, MethodNotSupportYet
 }
 
 // 查询合约symbol
 func (c *BtcClient) GetSymbol(contractAddr string) (string, error) {
-	return "", fmt.Errorf("This method is not supported yet!")
+	return "", MethodNotSupportYet
 }
 
 // 查询地址的nonce
 func (c *BtcClient) GetNonce(addr, param string) (uint64, error) {
-	return 0, fmt.Errorf("This method is not supported yet!")
+	return 0, MethodNotSupportYet
 }
 
 // 查询chain_id
 func (c *BtcClient) ChainID() (*big.Int, error) {
-	return nil, fmt.Errorf("This method is not supported yet!")
+	return nil, MethodNotSupportYet
 }
 
 // 构建合约调用
 func (c *BtcClient) BuildContractInfo(contract, abiContent, gasPrice, nonce, params string, args ...interface{}) (interface{}, error) {
-	return nil, fmt.Errorf("This method is not supported yet!")
+	return nil, MethodNotSupportYet
 }
 
 // 查询合约信息
 func (c *BtcClient) GetContractInfoByFunc(contractAddr, funcName string, args ...interface{}) (interface{}, error) {
-	return "", fmt.Errorf("This method is not supported yet!")
+	return "", MethodNotSupportYet
 }
