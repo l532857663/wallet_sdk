@@ -5,12 +5,11 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"math/big"
-
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/shopspring/decimal"
 )
 
 // BTC的交易结构体
@@ -68,19 +67,21 @@ func PayToWitnessPubKeyHashScript(pubKeyHash []byte) ([]byte, error) {
 // Demo
 func (c *BtcClient) getAddressUTXOForDemo(address string) []*UnspendUTXOList {
 	var res []*UnspendUTXOList
+	t1V := decimal.NewFromInt(7648)
 	tmp := &UnspendUTXOList{
 		TxHash:       "9a24b895b7bd528f1e24a7382792067272b6e8faa194ca35319d086604fc7fb6",
 		ScriptPubKey: "76a914d8c9cf87df6269a9962023a57f18b93d1e4417fa88ac",
 		Vout:         1,
-		Amount:       7648,
-		RawAmount:    big.NewInt(7648),
+		Amount:       t1V,
+		RawAmount:    t1V.BigInt(),
 	}
+	t2V := decimal.NewFromInt(12080)
 	tmp1 := &UnspendUTXOList{
 		TxHash:       "3c3c3bc3374297929eb5cd1c70e3d0525f6bf268f15c4c4855b14628b12dbe44",
 		ScriptPubKey: "76a914d8c9cf87df6269a9962023a57f18b93d1e4417fa88ac",
 		Vout:         1,
-		Amount:       12080,
-		RawAmount:    big.NewInt(12080),
+		Amount:       t2V,
+		RawAmount:    t2V.BigInt(),
 	}
 	res = append(res, tmp)
 	res = append(res, tmp1)

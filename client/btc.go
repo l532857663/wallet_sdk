@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"math/big"
 	"strings"
 	"wallet_sdk/txrules"
@@ -21,12 +22,13 @@ import (
 )
 
 type BtcClient struct {
-	Client        *rpcclient.Client
-	MempoolClient *mempool.MempoolClient
-	Params        *chaincfg.Params
-	Node          *Node
-	PsbtUpdater   *psbt.Updater
-	Placeholder   string
+	Client          *rpcclient.Client
+	MempoolClient   *mempool.MempoolClient
+	Params          *chaincfg.Params
+	Node            *Node
+	PsbtUpdater     *psbt.Updater
+	Placeholder     string
+	UnSpendUtxoPath string
 }
 
 // BTC节点
@@ -73,6 +75,7 @@ func NewBtcClient(conf *Node) (*BtcClient, error) {
 		node.MempoolClient = mempool.NewClient(node.Params)
 	case BtcNodeNetRegTest:
 		node.Params = &chaincfg.RegressionNetParams
+		node.UnSpendUtxoPath = "./UTXO/unSpend"
 		return node, nil
 	default:
 		node.Params = &chaincfg.Params{}
@@ -133,7 +136,7 @@ func (c *BtcClient) BuildTransferInfo(fromAddr, toAddr, contract, amount, gasPri
 	// 手续费
 	gas := BtcToSatoshi(gasPrice)
 	// 查询FROM地址的UTXO
-	unspendUTXOList := c.getAddressUTXO(fromAddr)
+	unspendUTXOList := getAddressUTXO(c, fromAddr)
 	if len(unspendUTXOList) < 1 {
 		return nil, fmt.Errorf("BuildTransaction fatal, from address not unspend utxo")
 	}
@@ -144,7 +147,7 @@ func (c *BtcClient) BuildTransferInfo(fromAddr, toAddr, contract, amount, gasPri
 	inAmount := big.NewInt(0)
 	outAmount := big.NewInt(0).Add(detail.RawAmount, gas)
 	for _, info := range unspendUTXOList {
-		if info.Amount < 700 {
+		if info.Amount.LessThan(decimal.NewFromInt(700)) {
 			continue
 		}
 		useUTXOList = append(useUTXOList, info)
@@ -281,7 +284,7 @@ func (c *BtcClient) SignTransferToRaw(txObj, hexPrivateKey string) (string, erro
 		if err != nil {
 			return "", err
 		}
-		txOut := wire.NewTxOut(utxoInfo.Amount, pkScript)
+		txOut := wire.NewTxOut(utxoInfo.Amount.CoefficientInt64(), pkScript)
 		prevOutFetcher.AddPrevOut(*outPoint, txOut)
 		fmt.Printf("wch----- txOut: %+v\n", txOut)
 		privateKeys = append(privateKeys, wif.PrivKey)
@@ -455,7 +458,7 @@ func (c *BtcClient) SignListAndSendTransfer(txObj string, hexPrivateKeys []strin
 		if err != nil {
 			return "", err
 		}
-		txOut := wire.NewTxOut(utxoInfo.Amount, pkScript)
+		txOut := wire.NewTxOut(utxoInfo.Amount.CoefficientInt64(), pkScript)
 		prevOutFetcher.AddPrevOut(*outPoint, txOut)
 		privateKeys = append(privateKeys, wif.PrivKey)
 	}

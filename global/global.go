@@ -9,3 +9,10 @@ var (
 	CONFIG *models.Server
 	LOG    *zap.Logger
 )
+
+var (
+	UtxoSpendPath       string
+	UtxoUnSpendPath     string
+	UtxoUserSpendPath   string
+	UtxoUserUnSpendPath string
+)

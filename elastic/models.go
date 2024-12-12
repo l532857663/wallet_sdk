@@ -16,7 +16,7 @@ type AddressUTXOInfo struct {
 	Balance             decimal.Decimal `json:"balance"`
 	TxCount             int64           `json:"tx_count"`
 	UnconfirmedReceived decimal.Decimal `json:"unconfirmed_received"`
-	UnconfirmedSent     decimal.Decimal `json:"unconfirmed_sent:`
+	UnconfirmedSent     decimal.Decimal `json:"unconfirmed_sent"`
 	UnconfirmedTxCount  int64           `json:"unconfirmed_tx_count"`
 	UnspentTxCount      int64           `json:"unspent_tx_count"`
 	FirstTx             string          `json:"first_tx"`
@@ -28,7 +28,7 @@ type UnSpentsUTXO struct {
 	Vout         int64           `json:"vout"`
 	ScriptPubKey string          `json:"scriptPubKey"`
 	Amount       decimal.Decimal `json:"amount"`
-	Height       int64           `json:"height:`
+	Height       int64           `json:"height"`
 }
 
 //*********************************************** BTC UTXO info ***********************************************

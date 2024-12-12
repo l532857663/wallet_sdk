@@ -165,7 +165,6 @@ func GetBalanceByAddress(chainName, address string) *CommonResp {
 	res := &CommonResp{}
 	funcName := "GetBalanceByAddress"
 
-	fmt.Printf("wch----- test1\n")
 	// 链接节点
 	cli, err := NewNodeService(chainName)
 	defer cli.Close()
@@ -176,7 +175,6 @@ func GetBalanceByAddress(chainName, address string) *CommonResp {
 		return res
 	}
 
-	fmt.Printf("wch----- test1-1\n")
 	// 请求地址余额
 	balance, err := cli.GetBalance(address, StateLatest)
 	if err != nil {

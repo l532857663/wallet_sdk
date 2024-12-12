@@ -60,7 +60,7 @@ func (u UnspendUTXOs) Swap(i, j int) {
 	u[i], u[j] = u[j], u[i]
 }
 func (u UnspendUTXOs) Less(i, j int) bool {
-	return u[i].Amount < u[j].Amount
+	return u[i].Amount.LessThan(u[j].Amount)
 }
 
 func DescSortUnspendUTXO(data []*UnspendUTXOList) {

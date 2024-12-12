@@ -1,8 +1,9 @@
 package models
 
 type Server struct {
-	Service ServiceConf `mapstructure:"service_conf" json:"service_conf" yaml:"service_conf"` // 服务配置
-	Zap     Zap         `mapstructure:"zap"          json:"zap"          yaml:"zap"`          // 日志配置
+	Service      ServiceConf `mapstructure:"service_conf"  json:"service_conf"  yaml:"service_conf"`  // 服务配置
+	Zap          Zap         `mapstructure:"zap"           json:"zap"           yaml:"zap"`           // 日志配置
+	UtxoFilepath string      `mapstructure:"utxo_filepath" json:"utxo_filepath" yaml:"utxo_filepath"` // utxo存放路径
 	//Mysql       db.Mysql              `mapstructure:"mysql"        json:"mysql"        yaml:"mysql"`        // 数据库配置
 	//Https       Https                 `mapstructure:"https"        json:"https"        yaml:"https"`        // 网络配置
 	//ElasticConf elastic.ElasticConfig `mapstructure:"elastic_conf" json:"elastic_conf" yaml:"elastic_conf"` // elastic配置

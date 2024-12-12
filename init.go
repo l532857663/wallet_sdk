@@ -6,6 +6,7 @@ import (
 	"os"
 	"wallet_sdk/global"
 	"wallet_sdk/models"
+	"wallet_sdk/utils/dir"
 	"wallet_sdk/utils/logutils"
 )
 
@@ -17,6 +18,9 @@ func MustLoad(confPath string) {
 
 	//// 初始化elastic数据库
 	//elastic.InitElasticInfo(global.CONFIG.ElasticConf)
+
+	// 初始化本地存放UTXO文件夹
+	initUTXOPath()
 }
 
 func readConfig(confPath string) *models.Server {
@@ -30,6 +34,21 @@ func readConfig(confPath string) *models.Server {
 		log.Fatalf("Yaml unmarshal error: %v", err)
 	}
 	return config
+}
+
+func initUTXOPath() {
+	// 初始化
+	global.UtxoSpendPath = global.CONFIG.UtxoFilepath + "/spend"
+	global.UtxoUnSpendPath = global.CONFIG.UtxoFilepath + "/unSpend"
+	pathList := []string{
+		global.CONFIG.UtxoFilepath,
+		global.UtxoSpendPath,
+		global.UtxoUnSpendPath,
+	}
+	if err := dir.CreateDir(pathList...); err != nil {
+		logutils.LogErrorf(global.LOG, "Error creating UTXO file:%v", err)
+		return
+	}
 }
 
 func Shutdown() {

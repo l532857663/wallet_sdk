@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"wallet_sdk"
+	"wallet_sdk/client"
 )
 
 var (
@@ -25,8 +26,13 @@ func main() {
 
 func testUtxoFunc() {
 	wallet_sdk.MustLoad("config.yml")
-	wallet_sdk.InitNode()
-	wallet_sdk.GetTransferByBlockHeight(1, 7150)
+	addr = "2N9krkXFN1JZdSKSBKdYXCg9ZP8vUPvmo1e"
+	wallet_sdk.NewGetUtxoInfo(addr)
+	// 建立本地UTXO索引
+	//startTime := time.Now().Unix()
+	//wallet_sdk.GetTransferByBlockHeight(0, 12094)
+	//endTime := time.Now().Unix()
+	//logutils.LogInfof(global.LOG, "GetTransferByBlockHeight time: [%v]", endTime-startTime)
 }
 func testEthFunc() {
 	// ETH、BSC、POLYGON
@@ -52,9 +58,9 @@ func testBtcFunc() {
 	priKey = "92K8ayCEhUEiv7JEGhxg9VSz2fQLEwRsk2ekJ5Eimsm1JbqKgjK"
 
 	// 查询信息
-	test2Func()
+	//test2Func()
 	// BTC的交易
-	//test4Func()
+	test4Func()
 	// 部分签名出账
 	// test5Func()
 	// 多地址签名出账
@@ -133,7 +139,7 @@ func test2Func() {
 	//fmt.Printf("res: %+v\n", res2)
 	// 查询地址可用UTXO
 	res3 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
-	fmt.Printf("res: %+v\n", res3)
+	fmt.Printf("res: %+v\n", res3.Data)
 	//// 查询交易详情
 	//res4 := wallet_sdk.GetTransaction(chainName, txHash)
 	////fmt.Printf("res: %+v\n", res4)
@@ -173,19 +179,22 @@ func test3Func() {
 }
 
 func test4Func() {
-	//// 查询主币余额
-	//res2 := wallet_sdk.GetBalanceByAddress(chainName, addr)
-	//fmt.Printf("res: %+v\n", res2)
-	// // 查询UTXO信息
-	// addr = "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux"
-	// res2 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
-	// fmt.Printf("res: %+v\n", res2)
+	// 查询主币余额
+	res1 := wallet_sdk.GetBalanceByAddress(chainName, addr)
+	fmt.Printf("res: %+v\n", res1.Data)
+	// 查询UTXO信息
+	//addr = "tb1pfzl0rw44mkgevdauhrtzy5kdztjezyq0rnfqfppzxtnrwzdj553qvz6lux"
+	res2 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
+	fmt.Printf("res: %+v\n", res2.Data)
+	for _, data := range res2.Data.([]*client.UnspendUTXOList) {
+		fmt.Printf("res2 data: %+v\n", data)
+	}
 
-	//// 查询节点gas price
-	//gasPriceData := wallet_sdk.GetGasPrice(chainName)
-	//// fmt.Printf("res: %+v\n", gasPriceData.Data)
-	//gasPrice := gasPriceData.Data.Average
-	gasPrice := "0.00000486"
+	// 查询节点gas price
+	gasPriceData := wallet_sdk.GetGasPrice(chainName)
+	// fmt.Printf("res: %+v\n", gasPriceData.Data)
+	gasPrice := gasPriceData.Data.Average
+	//gasPrice := "0.00000486"
 	fmt.Printf("gasPrice: %+v\n", gasPrice)
 
 	// 构建交易

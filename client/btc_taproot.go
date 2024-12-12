@@ -39,7 +39,7 @@ func (c *BtcClient) SignAndSendTaprootTransfer(txObj string, privateKey string, 
 		if err != nil {
 			return "", err
 		}
-		txOut := wire.NewTxOut(utxoInfo.Amount, pkScript)
+		txOut := wire.NewTxOut(utxoInfo.Amount.CoefficientInt64(), pkScript)
 		prevOutFetcher.AddPrevOut(*outPoint, txOut)
 		privateKeys = append(privateKeys, wif.PrivKey)
 	}

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"github.com/shopspring/decimal"
 	"math/big"
 
 	"github.com/btcsuite/btcd/txscript"
@@ -21,10 +22,10 @@ var FreeNodeMap map[string]*Node // 自定义节点信息
 
 // BTC系列的UnspendUTXOList
 type UnspendUTXOList struct {
-	TxHash       string
-	ScriptPubKey string
-	Vout         uint32
-	Amount       int64
+	TxHash       string          `json:"txid"`
+	ScriptPubKey string          `json:"scriptPubKey"`
+	Vout         uint32          `json:"vout"`
+	Amount       decimal.Decimal `json:"amount"`
 	RawAmount    *big.Int
 }
 
