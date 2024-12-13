@@ -1,8 +1,6 @@
 package dir
 
 import (
-	"fmt"
-	"io"
 	"os"
 )
 
@@ -48,45 +46,6 @@ func GetFiles(folder string) ([]os.DirEntry, error) {
 		}
 	}
 	return files, nil
-}
-
-// 读取文件内容
-func GetFileContent(filePath string) ([]byte, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	// 读取文件内容
-	return io.ReadAll(file)
-
-}
-
-func ReadFiles(folder string) ([][]byte, error) {
-	dir, err := os.Open(folder)
-	if err != nil {
-		return nil, err
-	}
-	defer dir.Close()
-	// 读取目录下的文件和子目录
-	files, err := dir.Readdir(-1) // -1 表示读取所有条目
-	if err != nil {
-		return nil, err
-	}
-	var fileList [][]byte
-	for _, file := range files {
-		if file.IsDir() {
-			continue // 忽略子目录
-		}
-		filePath := fmt.Sprintf("%s/%s", folder, file.Name())
-		content, err := GetFileContent(filePath)
-		if err != nil {
-			continue
-		}
-		fileList = append(fileList, content)
-	}
-	return fileList, nil
 }
 
 // 文件是否存在

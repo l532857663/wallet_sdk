@@ -16,6 +16,9 @@ func MustLoad(confPath string) {
 	// 初始化zap日志库
 	global.LOG = logutils.Log("", global.CONFIG.Zap)
 
+	// 初始化节点类型
+	global.ChainName = BTC_RegTest
+
 	//// 初始化elastic数据库
 	//elastic.InitElasticInfo(global.CONFIG.ElasticConf)
 
@@ -38,6 +41,7 @@ func readConfig(confPath string) *models.Server {
 
 func initUTXOPath() {
 	// 初始化
+	global.UtxoBlockHeightPath = global.CONFIG.UtxoFilepath + "/block"
 	global.UtxoSpendPath = global.CONFIG.UtxoFilepath + "/spend"
 	global.UtxoUnSpendPath = global.CONFIG.UtxoFilepath + "/unSpend"
 	pathList := []string{

@@ -11,8 +11,12 @@ var (
 )
 
 var (
-	UtxoSpendPath       string
-	UtxoUnSpendPath     string
-	UtxoUserSpendPath   string
-	UtxoUserUnSpendPath string
+	ChainName string
+
+	UtxoBlockHeightPath   string
+	UtxoSpendPath         string
+	UtxoUnSpendPath       string
+	UtxoUserSpendPath     string
+	UtxoUserUnSpendPath   string
+	UtxoBlockHeightByUser string
 )

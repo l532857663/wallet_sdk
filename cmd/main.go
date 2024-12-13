@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"wallet_sdk"
 	"wallet_sdk/client"
+	"wallet_sdk/global"
 )
 
 var (
 	length   = 12
 	mnemonic = "chaos coin cart couch system grunt soap never engine step glass quality"
 
-	chainName, priKey, priKeyHex, addr, toAddr, contract, txHash string
+	priKey, priKeyHex, addr, toAddr, contract, txHash string
 )
 
 func main() {
@@ -50,7 +51,7 @@ func testEthFunc() {
 }
 func testBtcFunc() {
 	//chainName = wallet_sdk.BTC_Testnet
-	chainName = wallet_sdk.BTC_RegTest
+	global.ChainName = wallet_sdk.BTC_RegTest
 	addr = "2N9krkXFN1JZdSKSBKdYXCg9ZP8vUPvmo1e"
 	toAddr = "bcrt1qyfre8aextm9dxj5vr45pfkycqft9qstkp8ufvj"
 	// addr = "bc1ptz34pme4qp43qv6ykp3r0tqz4scn8frzg9e53m034w9st9ncpums67r7sv"
@@ -100,7 +101,7 @@ func testImportFunc() {
 
 func test1Func() {
 	// 链接节点
-	chainName = wallet_sdk.BSC_Testnet
+	chainName := global.ChainName
 	// 查询主币余额
 	res2 := wallet_sdk.GetBalanceByAddress(chainName, addr)
 	fmt.Printf("res balance: %+v\n", res2.Data)
@@ -130,6 +131,8 @@ func test1Func() {
 }
 
 func test2Func() {
+	// 链接节点
+	chainName := global.ChainName
 	//// 查询块高
 	//res1 := wallet_sdk.GetBlockHeight(chainName)
 	//fmt.Printf("res: %+v\n", res1)
@@ -148,6 +151,8 @@ func test2Func() {
 }
 
 func test3Func() {
+	// 链接节点
+	chainName := global.ChainName
 	// 查询地址nonce
 	nonceData := wallet_sdk.GetNonce(chainName, addr, "latest")
 	// fmt.Printf("res: %+v\n", nonceData)
@@ -179,6 +184,8 @@ func test3Func() {
 }
 
 func test4Func() {
+	// 链接节点
+	chainName := global.ChainName
 	// 查询主币余额
 	res1 := wallet_sdk.GetBalanceByAddress(chainName, addr)
 	fmt.Printf("res: %+v\n", res1.Data)
@@ -212,6 +219,8 @@ func test4Func() {
 
 // 部分签名
 func test5Func() {
+	// 链接节点
+	chainName := global.ChainName
 	//// 查询地址余额
 	//res2 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
 	//fmt.Printf("res: %+v\n", res2)
@@ -231,6 +240,8 @@ func test5Func() {
 }
 
 func test6Func() {
+	// 链接节点
+	chainName := global.ChainName
 	// 多地址签名出账
 	// 查询节点gas price
 	gasPriceData := wallet_sdk.GetGasPrice(chainName)
@@ -259,7 +270,7 @@ func test6Func() {
 
 func test7Func() {
 	// 链接节点
-	chainName = wallet_sdk.BSC_Testnet
+	chainName := global.ChainName
 	addr = "0x39447c3040124057147512c3D1477dAc339fcf8C"
 
 	// 查询主币余额

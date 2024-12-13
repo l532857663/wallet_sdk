@@ -7,6 +7,7 @@ import (
 	"strings"
 	"wallet_sdk"
 	"wallet_sdk/client"
+	"wallet_sdk/global"
 	"wallet_sdk/utils"
 
 	"fyne.io/fyne/v2/app"
@@ -22,6 +23,7 @@ var (
 )
 
 func main() {
+	wallet_sdk.MustLoad("config.yml")
 	w := a.NewWindow("Wallet 钱包")
 
 	MainContent(w)
@@ -37,6 +39,7 @@ func MainContent(w fyne.Window) {
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Generate wallet", GenerateWallet()),
 		container.NewTabItem("Get address Unutxo list", GetAddressUTXO()),
+		container.NewTabItem("Run address Unutxo list", RunAddressUTXO()),
 		container.NewTabItem("Transaction info", TransactionInfo()),
 		container.NewTabItem("Multi to multi transaction", MultiToMultiTransfer()),
 		container.NewTabItem("Test TMP", E_G_Box()),
@@ -122,8 +125,12 @@ func GenerateWallet() *fyne.Container {
 		fmt.Printf("res: %+v\n", res1)
 		fmt.Printf("res Data: %+v\n", res1.Data)
 		accountInfo := res1.Data
-		priKey.Set(accountInfo.PrivateKey)
-		address.Set(accountInfo.Address)
+		if err := priKey.Set(accountInfo.PrivateKey); err != nil {
+			fmt.Println(err)
+		}
+		if err := address.Set(accountInfo.Address); err != nil {
+			fmt.Println(err)
+		}
 	})
 	button := container.New(layout.NewGridLayout(2), btn1, btn2)
 	/* ------------------------------- BUTTON ------------------------------- */
@@ -148,7 +155,7 @@ func GetAddressUTXO() *fyne.Container {
 	query := widget.NewButton("QUERY", func() {
 		addr := addressInput.Text
 		fmt.Printf("wch---- addr: %+v\n", addr)
-		res2 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
+		res2 := wallet_sdk.GetUTXOListByAddress(global.ChainName, addr)
 		sum := int64(0)
 		checkSum := int64(0)
 		utxoList := res2.Data.([]*client.UnspendUTXOList)
@@ -157,8 +164,9 @@ func GetAddressUTXO() *fyne.Container {
 		client.DescSortUnspendUTXO(utxoList)
 		for _, unspentUTXO := range utxoList {
 			// UTXO展示内容
-			val := utils.EncodeStringByUtxoInfo(unspentUTXO.TxHash, unspentUTXO.Vout, unspentUTXO.Amount)
-			sum += unspentUTXO.Amount
+			a := unspentUTXO.Amount.CoefficientInt64()
+			val := utils.EncodeStringByUtxoInfo(unspentUTXO.TxHash, unspentUTXO.Vout, a)
+			sum += a
 			// 多选框处理
 			checkbox := widget.NewCheck(val, func(c bool) {
 				_, _, amount := utils.DecodeUtxoInfoByString(val)
@@ -190,6 +198,7 @@ func GetAddressUTXO() *fyne.Container {
 }
 
 func ChooseUTXOToTransfer(utxoList *fyne.Container, useUTXOList []*client.UnspendUTXOList) {
+	chainName := global.ChainName
 	fromInputs := container.NewVBox()
 	var fromEntry []*widget.Label
 	var useUTXOIndex []int
@@ -232,7 +241,7 @@ func ChooseUTXOToTransfer(utxoList *fyne.Container, useUTXOList []*client.Unspen
 	)
 	top := container.NewVBox(inputC, inputM, inputG, alertBox)
 	// 创建一个限制大小的容器
-	limitedSizeContainer := container.NewMax(
+	limitedSizeContainer := container.NewStack(
 		top,
 	)
 	limitedSizeContainer.Resize(fyne.NewSize(300, 200)) // 设置容器的大小
@@ -245,7 +254,7 @@ func ChooseUTXOToTransfer(utxoList *fyne.Container, useUTXOList []*client.Unspen
 		for _, in := range useUTXOIndex {
 			v := useUTXOList[in]
 			vins = append(vins, v)
-			inAmount += v.Amount
+			inAmount += v.Amount.CoefficientInt64()
 		}
 		// to
 		var vouts, amounts []string
@@ -262,7 +271,9 @@ func ChooseUTXOToTransfer(utxoList *fyne.Container, useUTXOList []*client.Unspen
 		}
 		// 没填找零地址报错
 		if inputC.Text == "" {
-			alert.Set("Please enter the change address!")
+			if err := alert.Set("Please enter the change address!"); err != nil {
+				fmt.Println(err)
+			}
 			return
 		}
 		// 查询节点gas price
@@ -277,13 +288,17 @@ func ChooseUTXOToTransfer(utxoList *fyne.Container, useUTXOList []*client.Unspen
 		size := len(res1.Data) / 2
 		// 提示交易数据
 		transferInfo := fmt.Sprintf("Get BTC transferInfo\n[In amount] %v\n[Out amount]%s BTC\n[Gas price] %s BTC/vKB, size: %v\n[Flinally fee] %v/1000*%v", utils.Int64ToSatoshi(inAmount), outAmount.String(), gasPrice, size, gasPrice, size)
-		alert.Set(transferInfo)
+		if err := alert.Set(transferInfo); err != nil {
+			fmt.Println(err)
+		}
 	})
 	SignBtn := widget.NewButton("2.SignTransaction", func() {
 		priKey := inputM.Text
 		// 没填私钥报错
 		if inputM.Text == "" {
-			alert.Set("Please enter the address private key!")
+			if err := alert.Set("Please enter the address private key!"); err != nil {
+				fmt.Println(err)
+			}
 			return
 		}
 		fmt.Printf("wch---- sign: %+v\n", signData)
@@ -291,7 +306,9 @@ func ChooseUTXOToTransfer(utxoList *fyne.Container, useUTXOList []*client.Unspen
 		fmt.Printf("wch------ res1 data: %+v\n", res1.Data)
 		// 提示签名数据
 		if res1.Status.Code == wallet_sdk.RES_CODE_FAILED {
-			alert.Set(res1.Status.Message)
+			if err := alert.Set(res1.Status.Message); err != nil {
+				fmt.Println(err)
+			}
 			return
 		} else {
 			signData := ""
@@ -302,7 +319,9 @@ func ChooseUTXOToTransfer(utxoList *fyne.Container, useUTXOList []*client.Unspen
 				}
 				signData += string(d[i])
 			}
-			alert.Set("Signature Successful\n" + signData)
+			if err := alert.Set("Signature Successful\n" + signData); err != nil {
+				fmt.Println(err)
+			}
 		}
 		signData = res1.Data
 	})
@@ -311,10 +330,14 @@ func ChooseUTXOToTransfer(utxoList *fyne.Container, useUTXOList []*client.Unspen
 		fmt.Printf("wch------ res1 data: %+v\n", res1.Data)
 		// 提示交易HASH
 		if res1.Status.Code == wallet_sdk.RES_CODE_FAILED {
-			alert.Set(res1.Status.Message)
+			if err := alert.Set(res1.Status.Message); err != nil {
+				fmt.Println(err)
+			}
 			return
 		} else {
-			alert.Set(res1.Data)
+			if err := alert.Set(res1.Data); err != nil {
+				fmt.Println(err)
+			}
 		}
 	})
 	button := container.New(layout.NewGridLayout(3), BuildBtn, SignBtn, BroadcastBtn)
@@ -375,18 +398,26 @@ func TransactionInfo() *fyne.Container {
 			// 提示内容
 			// alertStr := fmt.Sprintf("Balance: %+v\n gasPrice: %+v\n", res2.Data, gasPrice)
 			alertStr := fmt.Sprintf("Balance: %+v\n gasPrice: %+v\n", 0, gasPrice)
-			str.Set(alertStr)
+			if err := str.Set(alertStr); err != nil {
+				fmt.Println(err)
+			}
 		} else {
-			str.Set(res5.Status.Message)
+			if err := str.Set(res5.Status.Message); err != nil {
+				fmt.Println(err)
+			}
 		}
 
 	})
 	btn2 := widget.NewButton("Sign&Broadcast", func() {
 		if priKey.Text == "" || signData == "" {
-			str.Set("Please check what you entered!")
+			if err := str.Set("Please check what you entered!"); err != nil {
+				fmt.Println(err)
+			}
 		}
 		res7 := wallet_sdk.SignTransferInfo(chainName, priKey.Text, signData)
-		str.Set(res7.Data)
+		if err := str.Set(res7.Data); err != nil {
+			fmt.Println(err)
+		}
 	})
 	button := container.New(layout.NewGridLayout(2), btn1, btn2)
 
@@ -445,7 +476,7 @@ func MultiToMultiTransfer() *fyne.Container {
 			amounts = append(amounts, toInfo[1])
 		}
 		// 查询节点gas price
-		gasPriceData := wallet_sdk.GetGasPrice(chainName)
+		gasPriceData := wallet_sdk.GetGasPrice(global.ChainName)
 		gasPrice := gasPriceData.Data.Average
 		fmt.Printf("wch----- gasPrice: %+v\n", gasPrice)
 		// 构建交易数据
@@ -461,6 +492,24 @@ func MultiToMultiTransfer() *fyne.Container {
 	split.SetOffset(0.5)
 	content := container.NewBorder(nil, BuildBtu, nil, nil, split)
 	return content
+}
+
+func RunAddressUTXO() *fyne.Container {
+	tip := widget.NewLabel("Enter address to query UTXO")
+	// 地址输入框
+	addressInput := widget.NewEntry()
+	// 请求按钮
+	checkInfo := widget.NewButton("Check address info", func() {
+		addr := addressInput.Text
+		fmt.Printf("wch---- addr: %+v\n", addr)
+		wallet_sdk.NewGetUtxoInfo(addr)
+		// 检查是否存在历史块高
+		//wallet_sdk.
+	})
+	button := container.New(layout.NewGridLayout(2), checkInfo)
+	// 顶部提示
+	top := container.NewVBox(tip, addressInput)
+	return container.NewBorder(top, button, nil, nil, nil)
 }
 
 func E_G_Box() *fyne.Container {
@@ -518,7 +567,7 @@ func E_G_Box() *fyne.Container {
 	page1.Add(button)
 	page1.Add(hideButton)
 
-	return container.NewMax(tabs)
+	return container.NewStack(tabs)
 }
 
 // 退出应用后调用 Run()方法不会执行后续的代码

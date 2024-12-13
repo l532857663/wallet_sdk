@@ -1,7 +1,6 @@
 package wallet_sdk
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/shopspring/decimal"
@@ -38,7 +37,7 @@ var (
 
 func NewGetUtxoInfo(address string) {
 	// 节点信息
-	chainName := BTC_RegTest
+	chainName := global.ChainName
 	// 链接节点
 	cli, err := NewNodeService(chainName)
 	if err != nil {
@@ -46,6 +45,7 @@ func NewGetUtxoInfo(address string) {
 		return
 	}
 	// 创建地址目录
+	global.UtxoBlockHeightByUser = global.UtxoBlockHeightPath + "/" + address
 	global.UtxoUserUnSpendPath = global.UtxoUnSpendPath + "/" + address
 	global.UtxoUserSpendPath = global.UtxoSpendPath + "/" + address
 	pathList := []string{
@@ -64,10 +64,10 @@ func GetTransferByBlockHeight(startHeight, newHigh int64) {
 	AddrUTXO = make(map[string][]interface{})
 	for i := startHeight; i <= newHigh; i++ {
 		srv.BlockHeight = i
+		// 检索处理UTXO
 		GetTransferByBlock(i)
-	}
-	for key, val := range AddrUTXO {
-		fmt.Printf("wch---- AddrUTXO: %v, %+v\n", key, len(val))
+		// 保存块高
+		dir.SaveFile(global.UtxoBlockHeightByUser, srv.BlockHeight)
 	}
 }
 
@@ -162,7 +162,7 @@ func DealTxOutByBlock() {
 		// 保存UTXO到文件
 		utxoName := fmt.Sprintf("%s/%s", global.UtxoUserUnSpendPath, key)
 		fmt.Printf("utxoName: %+v\n", utxoName)
-		SaveUTXO2File(utxoName, *UTXOInfo)
+		dir.SaveFile(utxoName, *UTXOInfo)
 		count++
 		return true
 	})
@@ -181,7 +181,7 @@ func DealSpendUTXOByBlock() {
 		}
 		// 保存UTXO到文件
 		utxoName := fmt.Sprintf("%s/%s", global.UtxoUserSpendPath, key)
-		SaveUTXO2File(utxoName, *UTXOInfo)
+		dir.SaveFile(utxoName, *UTXOInfo)
 		count++
 		return true
 	})
@@ -232,26 +232,4 @@ func GetUTXOInfoByTxOut(key, value interface{}) (string, string, string, int64, 
 	// value sats
 	amount := decimal.NewFromInt(txOut.Value)
 	return addr, pkScript, txInfo[0], vout, amount
-}
-
-func SaveUTXO2File(utxoName string, UTXOInfo elastic.UnSpentsUTXO) {
-	// 保存到文件
-	// 将结构体编码为JSON
-	jsonData, err := json.Marshal(UTXOInfo)
-	if err != nil {
-		logutils.LogErrorf(global.LOG, "Error marshaling JSON:%v", err)
-		return
-	}
-	// 将JSON数据写入文件
-	file, err := os.Create(utxoName)
-	if err != nil {
-		logutils.LogErrorf(global.LOG, "Error creating file:%v", err)
-		return
-	}
-	defer file.Close()
-	_, err = file.Write(jsonData)
-	if err != nil {
-		logutils.LogErrorf(global.LOG, "Error writing file:%v", err)
-		return
-	}
 }

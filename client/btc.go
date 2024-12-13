@@ -119,6 +119,12 @@ func (c *BtcClient) getFeePerKB(nblocks int64, btcMaxFeePerKb float64) (float64,
 	if err != nil {
 		return 0, fmt.Errorf("getFeePerKB fatal, " + err.Error())
 	}
+	if feeInfo.Errors != nil {
+		if c.Params != nil && c.Params == &chaincfg.RegressionNetParams {
+			return BtcRegTestDefaultFeeVb, nil
+		}
+		return 0, fmt.Errorf("getFeePerKB fatal, error: %+v\n", feeInfo.Errors)
+	}
 	feePerKb := *feeInfo.FeeRate
 	if feePerKb > btcMaxFeePerKb {
 		feePerKb = btcMaxFeePerKb
