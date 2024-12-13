@@ -46,6 +46,7 @@ func initUTXOPath() {
 	global.UtxoUnSpendPath = global.CONFIG.UtxoFilepath + "/unSpend"
 	pathList := []string{
 		global.CONFIG.UtxoFilepath,
+		global.UtxoBlockHeightPath,
 		global.UtxoSpendPath,
 		global.UtxoUnSpendPath,
 	}

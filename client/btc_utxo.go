@@ -65,7 +65,7 @@ func getLocalWalletAddressUTXO(c *BtcClient, address string) []*UnspendUTXOList 
 		fmt.Printf("invalid recipet address: %v", err)
 		return nil
 	}
-	fmt.Printf("wch----- addr: %+v\n", addr)
+	fmt.Printf("addr: %+v\n", addr)
 	addrList := []btcutil.Address{
 		addr,
 	}

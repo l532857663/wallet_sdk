@@ -55,13 +55,13 @@ func testBtcFunc() {
 	addr = "2N9krkXFN1JZdSKSBKdYXCg9ZP8vUPvmo1e"
 	toAddr = "bcrt1qyfre8aextm9dxj5vr45pfkycqft9qstkp8ufvj"
 	// addr = "bc1ptz34pme4qp43qv6ykp3r0tqz4scn8frzg9e53m034w9st9ncpums67r7sv"
-	txHash = "9f77dfe8c9709fd88d1f4ff1da022904fd8d36d07df68b285366b73a4c519405"
+	txHash = "19e1c7afbfcea3426bb5aa7e1e88a719497e11cd5dc370e9d1aa885785e34f5a"
 	priKey = "92K8ayCEhUEiv7JEGhxg9VSz2fQLEwRsk2ekJ5Eimsm1JbqKgjK"
 
 	// 查询信息
-	//test2Func()
+	test2Func()
 	// BTC的交易
-	test4Func()
+	//test4Func()
 	// 部分签名出账
 	// test5Func()
 	// 多地址签名出账
@@ -140,14 +140,14 @@ func test2Func() {
 	//height, _ := strconv.ParseInt(res1.Data, 10, 64)
 	//res2 := wallet_sdk.GetBlockInfoByHeight(chainName, height)
 	//fmt.Printf("res: %+v\n", res2)
-	// 查询地址可用UTXO
-	res3 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
-	fmt.Printf("res: %+v\n", res3.Data)
-	//// 查询交易详情
-	//res4 := wallet_sdk.GetTransaction(chainName, txHash)
-	////fmt.Printf("res: %+v\n", res4)
-	////fmt.Printf("res Data: %+v\n", res4.Data)
-	//fmt.Printf("res Data txInfo: %+v\n", res4.Data.TxInfo)
+	//// 查询地址可用UTXO
+	//res3 := wallet_sdk.GetUTXOListByAddress(chainName, addr)
+	//fmt.Printf("res: %+v\n", res3.Data)
+	// 查询交易详情
+	res4 := wallet_sdk.GetTransaction(chainName, txHash)
+	//fmt.Printf("res: %+v\n", res4)
+	//fmt.Printf("res Data: %+v\n", res4.Data)
+	fmt.Printf("res Data txInfo: %+v\n", res4.Data.TxInfo)
 }
 
 func test3Func() {

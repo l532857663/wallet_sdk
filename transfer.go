@@ -542,7 +542,7 @@ func MultiToMultiTransfer(chainName string, useUTXOList []*client.UnspendUTXOLis
 		res.Status = resp
 		return res
 	}
-	// fmt.Printf("test Tx info: %+v\n", TxInfo)
+	//fmt.Printf("test Tx info: %+v\n", TxInfo)
 
 	// 字符串
 	signData, err := json.Marshal(TxInfo)

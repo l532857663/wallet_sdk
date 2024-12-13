@@ -19,7 +19,8 @@ import (
 )
 
 var (
-	a = app.New()
+	a   = app.New()
+	srv *wallet_sdk.GetUtxoInfo
 )
 
 func main() {
@@ -38,8 +39,8 @@ func main() {
 func MainContent(w fyne.Window) {
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Generate wallet", GenerateWallet()),
-		container.NewTabItem("Get address Unutxo list", GetAddressUTXO()),
-		container.NewTabItem("Run address Unutxo list", RunAddressUTXO()),
+		container.NewTabItem("Get address UnUTXO list", GetAddressUTXO()),
+		container.NewTabItem("Sync address UTXO list", SyncAddressUTXO()),
 		container.NewTabItem("Transaction info", TransactionInfo()),
 		container.NewTabItem("Multi to multi transaction", MultiToMultiTransfer()),
 		container.NewTabItem("Test TMP", E_G_Box()),
@@ -284,6 +285,12 @@ func ChooseUTXOToTransfer(utxoList *fyne.Container, useUTXOList []*client.Unspen
 		}
 		// // 构建交易数据
 		res1 := wallet_sdk.MultiToMultiTransfer(chainName, vins, vouts, amounts, gasPrice, inputC.Text)
+		if res1.Status.Code == wallet_sdk.RES_CODE_FAILED {
+			if err := alert.Set(res1.Status.Message); err != nil {
+				fmt.Println(err)
+			}
+			return
+		}
 		signData = res1.Data
 		size := len(res1.Data) / 2
 		// 提示交易数据
@@ -494,22 +501,50 @@ func MultiToMultiTransfer() *fyne.Container {
 	return content
 }
 
-func RunAddressUTXO() *fyne.Container {
+func SyncAddressUTXO() *fyne.Container {
 	tip := widget.NewLabel("Enter address to query UTXO")
+	// 结果信息
+	leftLabel := widget.NewLabel("")
 	// 地址输入框
 	addressInput := widget.NewEntry()
+	addressInput.SetPlaceHolder("Enter address")
+	// 获取最新块高
+	startHeightInput := widget.NewEntry()
+	startHeightInput.SetPlaceHolder("Enter start height")
 	// 请求按钮
-	checkInfo := widget.NewButton("Check address info", func() {
+	checkInfo := widget.NewButton("Sync UTXO for address", func() {
 		addr := addressInput.Text
 		fmt.Printf("wch---- addr: %+v\n", addr)
-		wallet_sdk.NewGetUtxoInfo(addr)
+		srv = wallet_sdk.NewGetUtxoInfo(addr)
 		// 检查是否存在历史块高
-		//wallet_sdk.
+		startHeight := srv.GetUserHeightByAddress()
+		// 获取最新块高
+		res1 := wallet_sdk.GetBlockHeight(global.ChainName)
+		newHigh, err := strconv.ParseInt(res1.Data, 0, 64)
+		if err != nil {
+			fmt.Println(err)
+			leftLabel.SetText(err.Error())
+			return
+		}
+		inputH := int64(0)
+		// 优先输入框
+		if startHeightInput.Text != "" {
+			inputH, _ = strconv.ParseInt(startHeightInput.Text, 0, 64)
+			startHeight = inputH
+		}
+		// 其次历史数据，最后从最新块开始同步
+		if startHeight == 0 && inputH == 0 {
+			startHeight = newHigh
+		}
+		fmt.Printf("startHeight: %+v\n", startHeight)
+		go srv.GetTransferByBlockHeight(startHeight, newHigh)
 	})
 	button := container.New(layout.NewGridLayout(2), checkInfo)
 	// 顶部提示
-	top := container.NewVBox(tip, addressInput)
-	return container.NewBorder(top, button, nil, nil, nil)
+	top := container.NewVBox(tip, addressInput, startHeightInput)
+	// 侧边统计
+	left := container.NewVBox(leftLabel)
+	return container.NewBorder(top, button, left, nil, nil)
 }
 
 func E_G_Box() *fyne.Container {
@@ -572,6 +607,16 @@ func E_G_Box() *fyne.Container {
 
 // 退出应用后调用 Run()方法不会执行后续的代码
 func exit() {
+	fmt.Println("Wait Stop server...")
+	if srv != nil {
+		srv.Stop = true
+		srv.Wg.Wait()
+		for {
+			if srv.StopOK {
+				break
+			}
+		}
+	}
 	a.Quit()
 	fmt.Println("Exited")
 }

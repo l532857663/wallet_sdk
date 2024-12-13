@@ -228,7 +228,6 @@ func (c *BtcClient) genBtcTransaction(unSpendUTXOList []*UnspendUTXOList, toAddr
 	}
 	txOut := wire.NewTxOut(0, pkScript)
 	retApiTx.AddTxOut(txOut)
-
 	// 交易内容大小
 	preTxSize := PreCalculateSerializeSize(retApiTx)
 	fmt.Printf("preTxSize: %+v\n", preTxSize)

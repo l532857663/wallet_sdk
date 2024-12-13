@@ -22,27 +22,26 @@ type GetUtxoInfo struct {
 	Client      NodeService
 	Wg          sync.WaitGroup
 	Address     string
+	Stop        bool
+	StopOK      bool
 }
 
 var (
-	srv *GetUtxoInfo
-
 	SpendUTXOMap   sync.Map
 	UnSpendUTXOMap sync.Map
 	TxInMap        sync.Map
 
-	AddrUTXO   map[string][]interface{}
 	AddrAmount map[string]decimal.Decimal
 )
 
-func NewGetUtxoInfo(address string) {
+func NewGetUtxoInfo(address string) *GetUtxoInfo {
 	// 节点信息
 	chainName := global.ChainName
 	// 链接节点
 	cli, err := NewNodeService(chainName)
 	if err != nil {
 		log.Panicln("NewNodeService", chainName)
-		return
+		return nil
 	}
 	// 创建地址目录
 	global.UtxoBlockHeightByUser = global.UtxoBlockHeightPath + "/" + address
@@ -52,27 +51,35 @@ func NewGetUtxoInfo(address string) {
 		global.UtxoUserUnSpendPath,
 		global.UtxoUserSpendPath,
 	}
-	dir.CreateDir(pathList...)
-	srv = &GetUtxoInfo{
+	if err := dir.CreateDir(pathList...); err != nil {
+		logutils.LogErrorf(global.LOG, "Error creating file:%v", err)
+		return nil
+	}
+	return &GetUtxoInfo{
 		Client:  cli,
 		Address: address,
 	}
 }
 
-func GetTransferByBlockHeight(startHeight, newHigh int64) {
+func (srv *GetUtxoInfo) GetTransferByBlockHeight(startHeight, newHigh int64) {
 	logutils.LogInfof(global.LOG, "[GetTransferByBlockHeight] Start startHeight: %v, newHigh: %v", startHeight, newHigh)
-	AddrUTXO = make(map[string][]interface{})
 	for i := startHeight; i <= newHigh; i++ {
+		if srv.Stop {
+			logutils.LogInfof(global.LOG, "Stop get utxo by address: %v, block height: %+v", srv.Address, i-1)
+			break
+		}
 		srv.BlockHeight = i
 		// 检索处理UTXO
-		GetTransferByBlock(i)
-		// 保存块高
-		dir.SaveFile(global.UtxoBlockHeightByUser, srv.BlockHeight)
+		srv.GetTransferByBlock(i)
 	}
+	logutils.LogInfof(global.LOG, "Stop get utxo by address: %v, block height: %+v", srv.Address, srv.BlockHeight)
+	// 保存块高
+	dir.SaveFile(global.UtxoBlockHeightByUser, srv.BlockHeight)
+	srv.StopOK = true
 }
 
 // GetTransferByBlock 扫块获取交易数据
-func GetTransferByBlock(height int64) {
+func (srv *GetUtxoInfo) GetTransferByBlock(height int64) {
 	funcName := "GetTransferByBlock"
 	startTime := time.Now().Unix()
 	blockInfoInc, err := srv.Client.GetBlockInfoByHeight(height)
@@ -90,18 +97,18 @@ func GetTransferByBlock(height int64) {
 	for _, txInfo := range blockInfo.Transactions {
 		// 添加计数器
 		srv.Wg.Add(1)
-		go GetUTXOInfoByTransferInfo(txInfo)
+		go srv.GetUTXOInfoByTransferInfo(txInfo)
 	}
 	srv.Wg.Wait()
 	// 处理同块前后交易
-	DealTxInByBlock()
+	srv.DealTxInByBlock()
 	// 处理输出
-	DealTxOutByBlock()
+	srv.DealTxOutByBlock()
 	// 处理同块中使用的输出
-	DealSpendUTXOByBlock()
+	srv.DealSpendUTXOByBlock()
 }
 
-func GetUTXOInfoByTransferInfo(txInfo *wire.MsgTx) {
+func (srv *GetUtxoInfo) GetUTXOInfoByTransferInfo(txInfo *wire.MsgTx) {
 	//fmt.Printf("txInfo: %+v\n", txInfo)
 	defer srv.Wg.Done()
 	for _, txIn := range txInfo.TxIn {
@@ -117,7 +124,7 @@ func GetUTXOInfoByTransferInfo(txInfo *wire.MsgTx) {
 		UnSpendUTXOMap.Store(key, txOut)
 	}
 }
-func DealTxInByBlock() {
+func (srv *GetUtxoInfo) DealTxInByBlock() {
 	count := 0
 	TxInMap.Range(func(key, value interface{}) bool {
 		count++
@@ -151,11 +158,11 @@ func DealTxInByBlock() {
 	})
 }
 
-func DealTxOutByBlock() {
+func (srv *GetUtxoInfo) DealTxOutByBlock() {
 	count := 0
 	UnSpendUTXOMap.Range(func(key, value interface{}) bool {
 		defer UnSpendUTXOMap.Delete(key)
-		UTXOInfo := GetUTXOInfoForAddress(key, value)
+		UTXOInfo := srv.GetUTXOInfoForAddress(key, value)
 		if UTXOInfo == nil {
 			return true
 		}
@@ -171,11 +178,11 @@ func DealTxOutByBlock() {
 	}
 }
 
-func DealSpendUTXOByBlock() {
+func (srv *GetUtxoInfo) DealSpendUTXOByBlock() {
 	count := 0
 	SpendUTXOMap.Range(func(key, value interface{}) bool {
 		defer SpendUTXOMap.Delete(key)
-		UTXOInfo := GetUTXOInfoForAddress(key, value)
+		UTXOInfo := srv.GetUTXOInfoForAddress(key, value)
 		if UTXOInfo == nil {
 			return true
 		}
@@ -190,8 +197,8 @@ func DealSpendUTXOByBlock() {
 	}
 }
 
-func GetUTXOInfoForAddress(key, value interface{}) *elastic.UnSpentsUTXO {
-	addr, pkScript, txId, vout, amount := GetUTXOInfoByTxOut(key, value)
+func (srv *GetUtxoInfo) GetUTXOInfoForAddress(key, value interface{}) *elastic.UnSpentsUTXO {
+	addr, pkScript, txId, vout, amount := srv.GetUTXOInfoByTxOut(key, value)
 	if addr == "" {
 		return nil
 	}
@@ -210,7 +217,7 @@ func GetUTXOInfoForAddress(key, value interface{}) *elastic.UnSpentsUTXO {
 	return UTXOInfo
 }
 
-func GetUTXOInfoByTxOut(key, value interface{}) (string, string, string, int64, decimal.Decimal) {
+func (srv *GetUtxoInfo) GetUTXOInfoByTxOut(key, value interface{}) (string, string, string, int64, decimal.Decimal) {
 	zero := decimal.Zero
 	txOut := value.(*wire.TxOut)
 	// PKScript -> address, addrType
@@ -232,4 +239,19 @@ func GetUTXOInfoByTxOut(key, value interface{}) (string, string, string, int64, 
 	// value sats
 	amount := decimal.NewFromInt(txOut.Value)
 	return addr, pkScript, txInfo[0], vout, amount
+}
+
+func (srv *GetUtxoInfo) GetUserHeightByAddress() int64 {
+	userHeight, err := dir.GetFileContent(global.UtxoBlockHeightByUser)
+	if err != nil {
+		logutils.LogInfof(global.LOG, "Not get user history sync height: %+v", err)
+		return 0
+	}
+	fmt.Printf("Get userHeight: %+v\n", string(userHeight))
+	start, err := strconv.ParseInt(string(userHeight), 0, 64)
+	if err != nil {
+		logutils.LogErrorf(global.LOG, "Get user height error: %+v", err)
+		return 0
+	}
+	return start
 }

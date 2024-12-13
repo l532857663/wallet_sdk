@@ -148,7 +148,7 @@ func ImportAddressByPrikey(prikey, symbol string) *AccountInfoResp {
 		res.Status = resp
 		return res
 	}
-	fmt.Printf("wch---- key: %+v\n", key)
+	fmt.Printf("key: %+v\n", key)
 
 	// 获取coinType
 	coinType := utils.Symbol2CoinType(symbol)
@@ -203,7 +203,7 @@ func ImportAddressByPrikey(prikey, symbol string) *AccountInfoResp {
 func TestAccount(mnemonic, symbol string) {
 	funcName := "TestAccount"
 	seed, err := wallet.NewSeed(mnemonic, "", "")
-	fmt.Printf("wch-------- seed: %d, %s, %x\n", len(seed), base64.StdEncoding.EncodeToString(seed), seed)
+	fmt.Printf("seed: %d, %s, %x\n", len(seed), base64.StdEncoding.EncodeToString(seed), seed)
 	// 获取coinType
 	coinType := utils.Symbol2CoinType(symbol)
 	// 生成构建账户的结构体
