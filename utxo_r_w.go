@@ -124,6 +124,7 @@ func (srv *GetUtxoInfo) GetUTXOInfoByTransferInfo(txInfo *wire.MsgTx) {
 		UnSpendUTXOMap.Store(key, txOut)
 	}
 }
+
 func (srv *GetUtxoInfo) DealTxInByBlock() {
 	count := 0
 	TxInMap.Range(func(key, value interface{}) bool {

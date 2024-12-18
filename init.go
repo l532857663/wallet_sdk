@@ -4,6 +4,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
+	"wallet_sdk/elastic"
 	"wallet_sdk/global"
 	"wallet_sdk/models"
 	"wallet_sdk/utils/dir"
@@ -19,8 +20,8 @@ func MustLoad(confPath string) {
 	// 初始化节点类型
 	global.ChainName = BTC_RegTest
 
-	//// 初始化elastic数据库
-	//elastic.InitElasticInfo(global.CONFIG.ElasticConf)
+	// 初始化elastic数据库
+	elastic.InitElasticInfo(global.CONFIG.ElasticConf)
 
 	// 初始化本地存放UTXO文件夹
 	initUTXOPath()

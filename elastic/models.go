@@ -6,6 +6,7 @@ type ElasticConfig struct {
 	Host     string `mapstructure:"host"     json:"host"     yaml:"host"`
 	Username string `mapstructure:"username" json:"username" yaml:"username"`
 	Password string `mapstructure:"password" json:"password" yaml:"password"`
+	CaCrt    string `mapstructure:"ca_crt"   json:"ca_crt"   yaml:"ca_crt"`
 }
 
 // *********************************************** BTC UTXO info ***********************************************
