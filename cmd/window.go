@@ -2,13 +2,15 @@ package main
 
 import (
 	"fmt"
-	"fyne.io/fyne/v2"
+	"log"
 	"strconv"
 	"strings"
 	"wallet_sdk"
 	"wallet_sdk/client"
 	"wallet_sdk/global"
 	"wallet_sdk/utils"
+
+	"fyne.io/fyne/v2"
 
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
@@ -19,17 +21,31 @@ import (
 )
 
 var (
-	a   = app.New()
-	srv *wallet_sdk.GetUtxoInfo
+	a              = app.New()
+	srv            *wallet_sdk.GetUtxoInfo
+	mainPageInfo   *fyne.Container
+	getBalancePage *fyne.Container
+	mainSize       = fyne.NewSize(1100, 700)
+)
+
+var (
+	// 次级页面
+	getAddressBalaceTab *container.TabItem
 )
 
 func main() {
 	wallet_sdk.MustLoad("config.yml")
+	// 设置自定义字体
+	myTheme, err := utils.NewMyTheme()
+	if err != nil {
+		log.Fatalf("Failed to load font: %v", err)
+	}
+	a.Settings().SetTheme(myTheme)
 	w := a.NewWindow("Wallet 钱包")
 
 	MainContent(w)
 
-	w.Resize(fyne.NewSize(1100, 700))
+	w.Resize(mainSize)
 
 	w.Show()
 	a.Run()
@@ -37,18 +53,20 @@ func main() {
 }
 
 func MainContent(w fyne.Window) {
+	getAddressBalaceTab := container.NewTabItem("Get address balance", GetAddressBalance(w))
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Generate wallet", GenerateWallet()),
+		getAddressBalaceTab,
 		container.NewTabItem("Get address UnUTXO list", GetAddressUTXO()),
 		container.NewTabItem("Sync address UTXO list", SyncAddressUTXO()),
 		container.NewTabItem("Transaction info", TransactionInfo()),
 		container.NewTabItem("Multi to multi transaction", MultiToMultiTransfer()),
-		container.NewTabItem("Test TMP", E_G_Box()),
 	)
 	tabs.SetTabLocation(container.TabLocationLeading)
-
 	// 设置窗口的内容
-	w.SetContent(tabs)
+	mainPageInfo = container.NewVBox(tabs)
+	mainPageInfo.Resize(mainSize)
+	w.SetContent(mainPageInfo)
 }
 
 func GenerateWallet() *fyne.Container {
@@ -58,7 +76,7 @@ func GenerateWallet() *fyne.Container {
 		// 助记词数量
 		mnemonicLen = []string{"12", "24"}
 		// TODO: 助记词显示语言
-		// langs = []string{"EN", "CN_S", "CN_T"}
+		langs = []string{"EN", "CN_S", "CN_T"}
 		// 网络可选列表
 		networks = []string{"BTC", "BTCTest", "BTCRegT", "ETH", "TRON"}
 	)
@@ -74,10 +92,10 @@ func GenerateWallet() *fyne.Container {
 	params := widget.NewSelect(networks, func(selected string) {})
 	params.SetSelected("BTCTest")
 	// TODO: 中文暂时显示不出来
-	// language := widget.NewSelect(langs, func(value string) {
-	// 	fmt.Println("Select set to", value)
-	// })
-	// language.SetSelected("EN")
+	language := widget.NewSelect(langs, func(value string) {
+		fmt.Println("Select set to", value)
+	})
+	language.SetSelected("EN")
 	// 导入助记词
 	inputM := widget.NewEntry()
 	inputM.SetPlaceHolder("Enter mnemonic...")
@@ -92,8 +110,8 @@ func GenerateWallet() *fyne.Container {
 		widget.NewLabel("Default length is 12, configurable to 24"),
 		length,
 		params,
-		// widget.NewLabel("Default language is EN"),
-		// language,
+		widget.NewLabel("Default language is EN"),
+		language,
 		importMnemonic,
 	)
 	/* ------------------------------- LEFT ------------------------------- */
@@ -140,6 +158,24 @@ func GenerateWallet() *fyne.Container {
 
 func getCenter(data string) *fyne.Container {
 	return container.New(layout.NewGridWrapLayout(fyne.NewSize(50, 50)), widget.NewLabel(data))
+}
+
+func GetAddressBalance(w fyne.Window) *fyne.Container {
+	// 创建一个按钮和一个标签
+	myLabel := widget.NewLabel("Please choose Chain")
+
+	// 创建一个下拉菜单，内容为 BTC 和 ETH
+	options := []string{"BTC", "ETH"}
+	selectOption := widget.NewSelect(options, func(selected string) {
+		// 创建一个新的标签页容器，并添加标签页
+		tabContainer := GetAddressUTXO()
+		// 设置窗口的内容为新的标签页容器
+		w.SetContent(tabContainer)
+	})
+	// 将按钮和标签放入一个垂直布局中
+	getBalancePage = container.NewVBox(myLabel, selectOption)
+
+	return getBalancePage
 }
 
 func GetAddressUTXO() *fyne.Container {
@@ -545,64 +581,6 @@ func SyncAddressUTXO() *fyne.Container {
 	// 侧边统计
 	left := container.NewVBox(leftLabel)
 	return container.NewBorder(top, button, left, nil, nil)
-}
-
-func E_G_Box() *fyne.Container {
-	// 创建标签和输入框，用于第一页
-	label1 := widget.NewLabel("Enter query and click search:")
-	entry := widget.NewEntry()
-	entry.SetPlaceHolder("Enter query")
-
-	// 模拟的数据库数据
-	data := []string{"Apple", "Banana", "Cherry", "Date", "Elderberry", "Fig", "Grape", "Honeydew"}
-
-	// 创建一个容器，用于显示第一页内容
-	page1 := container.NewVBox(label1, entry)
-
-	// 创建第二页的标签和结果容器
-	label2 := widget.NewLabel("Search Results:")
-	resultContainer := container.NewVBox()
-	page2 := container.NewVBox(label2, resultContainer)
-
-	// 创建 Tab 容器，用于管理多个页面
-	tabs := container.NewAppTabs(
-		container.NewTabItem("Page 1", page1),
-		container.NewTabItem("Page 2", page2),
-	)
-
-	// 隐藏第二页 Tab 以便于跳转控制
-	tabs.Items[1].Content.Hide()
-
-	// 创建一个按钮，当按钮被点击时，进行查询并跳转到第二页
-	button := widget.NewButton("Search", func() {
-		query := entry.Text
-		filteredData := utils.FilterData(data, query)
-		resultContainer.Objects = nil
-
-		for _, item := range filteredData {
-			checkbox := widget.NewCheck(item, func(bool) {})
-			resultContainer.Add(checkbox)
-		}
-		resultContainer.Refresh()
-
-		// 显示第二页内容并切换到第二页
-		tabs.Items[1].Content.Show()
-		tabs.SelectIndex(1)
-	})
-
-	hideButton := widget.NewButton("Hide Tabs", func() {
-		if tabs.Visible() {
-			tabs.Hide()
-		} else {
-			tabs.Show()
-		}
-	})
-
-	// 将按钮添加到第一页容器
-	page1.Add(button)
-	page1.Add(hideButton)
-
-	return container.NewStack(tabs)
 }
 
 // 退出应用后调用 Run()方法不会执行后续的代码

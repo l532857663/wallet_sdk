@@ -11,18 +11,42 @@ var (
 	length   = 12
 	mnemonic = "chaos coin cart couch system grunt soap never engine step glass quality"
 
-	priKey, priKeyHex, addr, toAddr, contract, txHash string
+	priKey, priKeyHex, addr, toAddr, contract, txHash, langs string
 )
 
 func main() {
 	// 生成助记词、使用助记词生成私钥、地址、生成seed
 	//testMnemonicFunc()
 	// 导入私钥生成钱包信息
-	// testImportFunc()
-	//testEthFunc()
-	testBtcFunc()
+	//testImportFunc()
+	testEthFunc()
+	// testBtcFunc()
 	//testTronFunc()
 	//testUtxoFunc()
+}
+
+func testMnemonicFunc() {
+	// // 生成助记词
+	// res := wallet_sdk.GenerateMnemonic(length, "")
+	// fmt.Printf("res: %+v\n", res)
+	// mnemonic = res.Data
+
+	// 使用助记词生成账户地址、私钥
+	var addressIndex uint32 = 0
+	res1 := wallet_sdk.GenerateAccountByMnemonic(mnemonic, "BTCRegT", &addressIndex)
+	fmt.Printf("res: %+v\n", res1)
+	fmt.Printf("res Data: %+v\n", res1.Data)
+	// 使用助记词生成seed
+	// wallet_sdk.TestAccount(mnemonic, "BTC")
+	return
+}
+
+func testImportFunc() {
+	// 导入钱包操作
+	priKey = "cQSreoKBANpfNxLHD6v1crHE3rz44Q7hZPsV2XaJVQv6dA5eXGQV"
+	res := wallet_sdk.ImportAddressByPrikey(priKey, "BTCTest")
+	fmt.Printf("res: %+v\n", res)
+	fmt.Printf("res Data: %+v\n", res.Data)
 }
 
 func testUtxoFunc() {
@@ -43,11 +67,11 @@ func testEthFunc() {
 	//addr     = "0x3e7094B74549a6b8c4b4923cbC10Ef35c4D787Ce"
 	contract = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" // BASE USDC
 	// 查询数据(自定义节点信息、余额、nonce、gas、contract、交易详情、块高等)
-	//test1Func()
+	test1Func()
 	// 交易
 	// test3Func()
 	// 合约调用操作
-	test7Func()
+	//test7Func()
 }
 func testBtcFunc() {
 	//chainName = wallet_sdk.BTC_Testnet
@@ -76,28 +100,6 @@ func testTronFunc() {
 	// toAddr    = "TDUya7MQDTifg2EDyKZuCqScrnu2npnuor"
 	// contract  = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj" // TRX USDT
 }
-func testMnemonicFunc() {
-	// // 生成助记词
-	// res := wallet_sdk.GenerateMnemonic(length, "")
-	// fmt.Printf("res: %+v\n", res)
-	// mnemonic = res.Data
-
-	// 使用助记词生成账户地址、私钥
-	var addressIndex uint32 = 0
-	res1 := wallet_sdk.GenerateAccountByMnemonic(mnemonic, "BTCRegT", &addressIndex)
-	fmt.Printf("res: %+v\n", res1)
-	fmt.Printf("res Data: %+v\n", res1.Data)
-	// 使用助记词生成seed
-	// wallet_sdk.TestAccount(mnemonic, "BTC")
-	return
-}
-
-func testImportFunc() {
-	// 导入钱包操作
-	res := wallet_sdk.ImportAddressByPrikey(priKey, "TRON")
-	fmt.Printf("res: %+v\n", res)
-	fmt.Printf("res Data: %+v\n", res.Data)
-}
 
 func test1Func() {
 	// 链接节点
@@ -108,22 +110,22 @@ func test1Func() {
 	// 查询代币余额
 	res2_1 := wallet_sdk.GetBalanceByAddressAndContract(chainName, addr, contract)
 	fmt.Printf("res token: %+v\n", res2_1.Data)
-	// 查询地址nonce
-	nonceData := wallet_sdk.GetNonce(chainName, addr, "latest")
-	fmt.Printf("res nonce: %+v\n", nonceData.Data)
-	// 查询节点gas price
-	gasPriceData := wallet_sdk.GetGasPrice(chainName)
-	fmt.Printf("res gas: %+v\n", gasPriceData.Data)
-	// 查询合约信息
-	res3 := wallet_sdk.GetContractInfo(chainName, contract)
-	// fmt.Printf("res: %+v\n", res3)
-	fmt.Printf("res Data: %+v\n", res3.Data)
-
-	// 查询交易详情
-	res4 := wallet_sdk.GetTransaction(chainName, txHash)
-	//fmt.Printf("res: %+v\n", res4)
-	//fmt.Printf("res Data: %+v\n", res4.Data)
-	fmt.Printf("res Data txInfo: %+v\n", res4.Data.TxInfo)
+	//// 查询地址nonce
+	//nonceData := wallet_sdk.GetNonce(chainName, addr, "latest")
+	//fmt.Printf("res nonce: %+v\n", nonceData.Data)
+	//// 查询节点gas price
+	//gasPriceData := wallet_sdk.GetGasPrice(chainName)
+	//fmt.Printf("res gas: %+v\n", gasPriceData.Data)
+	//// 查询合约信息
+	//res3 := wallet_sdk.GetContractInfo(chainName, contract)
+	//// fmt.Printf("res: %+v\n", res3)
+	//fmt.Printf("res Data: %+v\n", res3.Data)
+	//
+	//// 查询交易详情
+	//res4 := wallet_sdk.GetTransaction(chainName, txHash)
+	////fmt.Printf("res: %+v\n", res4)
+	////fmt.Printf("res Data: %+v\n", res4.Data)
+	//fmt.Printf("res Data txInfo: %+v\n", res4.Data.TxInfo)
 
 	// // 查询块高
 	// res8 := wallet_sdk.GetBlockHeight(chainName)

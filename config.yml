@@ -17,4 +17,5 @@ elastic_conf:
   host: 'https://localhost:9200'
   username: 'elastic'
   password: '0wypne1=4NdK1dYTrV5+'
+  ca_crt: '/Users/mac/certs/dev_es_ca.crt'
 utxo_filepath: './UTXO'
